@@ -30,6 +30,11 @@ func Unpack(str string) (string, error) {
 		// Если это было начала экранирования
 		// тогда возьмем заэкранированный символ
 		if char == '\\' {
+			// Нельзя чтобы символ экранирования был последним
+			if i >= len(src) {
+				return "", ErrInvalidString
+			}
+
 			char = src[i]
 			i++
 		}
