@@ -11,28 +11,38 @@ import (
 var ErrInvalidString = errors.New("invalid string")
 
 func Unpack(str string) (string, error) {
-	var char rune
-	var num int
+	var char rune // Символ
+	var num int   // Количество повторов
 
 	src := []rune(str)
 	var dst strings.Builder
+
 	for i := 0; i < len(src); {
-		if i == len(src)-1 && !unicode.IsDigit(src[i]) {
-			char = src[i]
-			num = 1
-			i++
-		} else if i < len(src)-1 && !unicode.IsDigit(src[i]) && !unicode.IsDigit(src[i+1]) {
-			char = src[i]
-			num = 1
-			i++
-		} else if i < len(src)-1 && !unicode.IsDigit(src[i]) && unicode.IsDigit(src[i+1]) {
-			char = src[i]
-			num, _ = strconv.Atoi(string(src[i+1]))
-			i += 2
-		} else {
+		// Берем символ
+		char = src[i]
+		i++
+
+		// Если вместо символа оказалась цифра, то значит нарушен формат строки
+		if unicode.IsDigit(char) {
 			return "", ErrInvalidString
 		}
 
+		// Если это было начала экранирования
+		// тогда возьмем заэкранированный символ
+		if char == '\\' {
+			char = src[i]
+			i++
+		}
+
+		// А нет ли там цифрового суффикса?
+		if i < len(src) && unicode.IsDigit(src[i]) {
+			num, _ = strconv.Atoi(string(src[i]))
+			i++
+		} else {
+			num = 1
+		}
+
+		// Добавляем символы к результату
 		fmt.Fprint(&dst, strings.Repeat(string(char), num))
 	}
 
