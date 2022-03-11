@@ -1,4 +1,4 @@
-module otus-go
+module github.com/andrey-tushev/otus-go
 
 go 1.17
 
