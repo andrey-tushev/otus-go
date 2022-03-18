@@ -6,11 +6,11 @@ import (
 	"strings"
 )
 
-// Разбивка по пробельным символам
+// Разбивка по пробельным символам.
 var spacesRe = regexp.MustCompile(`\s+`)
 
-// Сколько слов нужно получить
-const topSize = 10
+// Сколько слов нужно получить.
+const maxTopSize = 10
 
 func Top10(text string) []string {
 	// Разобьем по словам
@@ -30,8 +30,8 @@ func Top10(text string) []string {
 		word  string
 		count int
 	}
-	// Размер заранее известен
-	// Сделаем массив указателей, чтобы при сортировке не происходило копирование большого количества данных, а только указатели
+	// Размер заранее известен. Сделаем массив указателей,
+	// чтобы при сортировке не происходило копирование большого количества данных, а только копировались указатели.
 	top := make([]*topRec, len(counts))
 
 	// Заполним топ популярных слов
@@ -55,12 +55,13 @@ func Top10(text string) []string {
 	})
 
 	// Возьмем из топа 10 самых популярных слов
-	var res []string
-	for p, rec := range top {
-		if p >= topSize {
-			break
-		}
-		res = append(res, rec.word)
+	size := len(top)
+	if size > maxTopSize {
+		size = maxTopSize
+	}
+	res := make([]string, 0, size)
+	for p := 0; p < size; p++ {
+		res[p] = top[p].word
 	}
 	return res
 }
