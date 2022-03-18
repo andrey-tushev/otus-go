@@ -59,7 +59,7 @@ func Top10(text string) []string {
 	if size > maxTopSize {
 		size = maxTopSize
 	}
-	res := make([]string, 0, size)
+	res := make([]string, size)
 	for p := 0; p < size; p++ {
 		res[p] = top[p].word
 	}
