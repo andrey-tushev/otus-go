@@ -30,7 +30,7 @@ func NewCache(capacity int) Cache {
 	}
 }
 
-func (l lruCache) Set(key Key, value interface{}) bool {
+func (l *lruCache) Set(key Key, value interface{}) bool {
 	existedItem, exists := l.items[key]
 	_ = existedItem
 	if exists {
@@ -56,7 +56,7 @@ func (l lruCache) Set(key Key, value interface{}) bool {
 	return exists
 }
 
-func (l lruCache) Get(key Key) (interface{}, bool) {
+func (l *lruCache) Get(key Key) (interface{}, bool) {
 	existedItem, exists := l.items[key]
 	if !exists {
 		return nil, false
@@ -69,6 +69,7 @@ func (l lruCache) Get(key Key) (interface{}, bool) {
 	return e.value, exists
 }
 
-func (l lruCache) Clear() {
-	panic("implement me")
+func (l *lruCache) Clear() {
+	l.queue = NewList()
+	l.items = make(map[Key]*ListItem, l.capacity)
 }
