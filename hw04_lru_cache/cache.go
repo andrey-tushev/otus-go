@@ -30,13 +30,6 @@ func NewCache(capacity int) Cache {
 	}
 }
 
-//если элемент присутствует в словаре, то обновить его значение и переместить элемент в начало очереди;
-
-//если элемента нет в словаре, то добавить в словарь и в начало очереди (при этом, если размер очереди больше ёмкости кэша,
-//то необходимо удалить последний элемент из очереди и его значение из словаря);
-
-//возвращаемое значение - флаг, присутствовал ли элемент в кэше.
-
 func (l lruCache) Set(key Key, value interface{}) bool {
 	existedItem, exists := l.items[key]
 	_ = existedItem
@@ -52,7 +45,7 @@ func (l lruCache) Set(key Key, value interface{}) bool {
 		}
 		l.items[key] = l.queue.PushFront(newItem)
 
-		// Удаление самого редко используемого элемента
+		// Удаление наиболее редко используемого элемента (из конца списка)
 		if l.queue.Len() > l.capacity {
 			oldest := l.queue.Back()
 			delete(l.items, oldest.Value.(*cacheItem).key)
@@ -69,8 +62,10 @@ func (l lruCache) Get(key Key) (interface{}, bool) {
 		return nil, false
 	}
 
-	e := existedItem.Value.(*cacheItem)
+	// Освежаем элемент, переместив его в начало спискаы
 	l.queue.PushFront(existedItem)
+
+	e := existedItem.Value.(*cacheItem)
 	return e.value, exists
 }
 

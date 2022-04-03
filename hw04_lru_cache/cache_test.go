@@ -69,6 +69,26 @@ func TestCache(t *testing.T) {
 		require.False(t, c.Set("A", 101))
 		require.False(t, c.Set("B", 201))
 		// B, A, E
+
+		v, e := c.Get("A")
+		require.Equal(t, 101, v)
+		require.True(t, e)
+
+		v, e = c.Get("B")
+		require.Equal(t, 201, v)
+		require.True(t, e)
+
+		v, e = c.Get("C")
+		require.Nil(t, v)
+		require.False(t, e)
+
+		v, e = c.Get("D")
+		require.Nil(t, v)
+		require.False(t, e)
+
+		v, e = c.Get("E")
+		require.Equal(t, 501, v)
+		require.True(t, e)
 	})
 }
 
