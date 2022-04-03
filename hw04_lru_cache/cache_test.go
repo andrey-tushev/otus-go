@@ -49,8 +49,26 @@ func TestCache(t *testing.T) {
 		require.Nil(t, val)
 	})
 
-	t.Run("purge logic", func(t *testing.T) {
-		// Write me
+	t.Run("least recently used", func(t *testing.T) {
+		c := NewCache(3)
+
+		require.False(t, c.Set("A", 100))
+		require.False(t, c.Set("B", 200))
+		require.False(t, c.Set("C", 300))
+		// C, B, A
+
+		require.False(t, c.Set("D", 400))
+		require.False(t, c.Set("E", 500))
+		// E, D, C
+
+		require.True(t, c.Set("C", 301))
+		require.True(t, c.Set("D", 401))
+		require.True(t, c.Set("E", 501))
+		// E, D, C
+
+		require.False(t, c.Set("A", 101))
+		require.False(t, c.Set("B", 201))
+		// B, A, E
 	})
 }
 

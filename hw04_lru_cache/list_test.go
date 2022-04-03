@@ -49,11 +49,32 @@ func TestList(t *testing.T) {
 		}
 		require.Equal(t, []int{70, 80, 60, 40, 10, 30, 50}, elems)
 
-		printList(l)
+		//printList(l)
+	})
+
+	t.Run("edges", func(t *testing.T) {
+		l := NewList()
+		require.Nil(t, l.Front())
+		require.Nil(t, l.Back())
+
+		l.PushFront(10)
+		require.Equal(t, 10, l.Front().Value)
+		require.Equal(t, 10, l.Back().Value)
+
+		l.Remove(l.Front())
+		require.Nil(t, l.Front())
+		require.Nil(t, l.Back())
+
+		l.PushBack(20)
+		l.PushFront(10)
+		l.MoveToFront(l.Back())
+		require.Equal(t, 20, l.Front().Value)
+		require.Equal(t, 10, l.Back().Value)
 	})
 }
 
 // Отладочный вывод для удобной проверки списка
+// TODO: Удалить после завершения отладки
 func printList(l List) {
 	for i := l.Front(); i != nil; i = i.Next {
 		prev := "  "
