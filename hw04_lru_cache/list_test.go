@@ -1,7 +1,6 @@
 package hw04lrucache
 
 import (
-	"fmt"
 	"testing"
 
 	"github.com/stretchr/testify/require"
@@ -48,8 +47,6 @@ func TestList(t *testing.T) {
 			elems = append(elems, i.Value.(int))
 		}
 		require.Equal(t, []int{70, 80, 60, 40, 10, 30, 50}, elems)
-
-		//printList(l)
 	})
 
 	t.Run("edges", func(t *testing.T) {
@@ -73,19 +70,19 @@ func TestList(t *testing.T) {
 	})
 }
 
-// Отладочный вывод для удобной проверки списка
 // TODO: Удалить после завершения отладки
-func printList(l List) {
-	for i := l.Front(); i != nil; i = i.Next {
-		prev := "  "
-		if i.Prev != nil {
-			prev = fmt.Sprintf("%v", i.Prev.Value)
-		}
-		next := "  "
-		if i.Next != nil {
-			next = fmt.Sprintf("%v", i.Next.Value)
-		}
-		fmt.Printf("%s-[%d]-%s\n", prev, i.Value, next)
-	}
-	fmt.Printf("\n")
-}
+// Отладочный вывод для удобной проверки списка
+// func printList(l List) {
+//	for i := l.Front(); i != nil; i = i.Next {
+//		prev := "  "
+//		if i.Prev != nil {
+//			prev = fmt.Sprintf("%v", i.Prev.Value)
+//		}
+//		next := "  "
+//		if i.Next != nil {
+//			next = fmt.Sprintf("%v", i.Next.Value)
+//		}
+//		fmt.Printf("%s-[%d]-%s\n", prev, i.Value, next)
+//	}
+//	fmt.Printf("\n")
+// }
