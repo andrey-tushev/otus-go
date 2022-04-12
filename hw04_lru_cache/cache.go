@@ -36,7 +36,6 @@ func (l *lruCache) Set(key Key, value interface{}) bool {
 	defer l.mu.Unlock()
 
 	existedItem, exists := l.items[key]
-	_ = existedItem
 	if exists {
 		// Замена значения на новое
 		e := existedItem.Value.(*cacheItem)
