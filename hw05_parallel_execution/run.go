@@ -14,22 +14,23 @@ func Run(tasks []Task, workersNum, maxErrors int) error {
 	return batch.Run()
 }
 
-// Запускалка пакета задач
+// Запускалка пакета задач.
 type Batch struct {
 	queue      chan Task
 	workersNum int
 	maxErrors  int
 	errCount   int
-	errMutex   sync.Mutex
+	errMutex   *sync.Mutex
 }
 
-// Конструктор
+// Конструктор.
 func NewBatch(tasks []Task, workersNum, maxErrors int) Batch {
 	b := Batch{
 		queue:      make(chan Task, len(tasks)),
 		workersNum: workersNum,
 		maxErrors:  maxErrors,
 		errCount:   0,
+		errMutex:   &sync.Mutex{},
 	}
 
 	// Заполним очередь задач
@@ -41,16 +42,16 @@ func NewBatch(tasks []Task, workersNum, maxErrors int) Batch {
 	return b
 }
 
-// Запускалка пакета задач
+// Запускалка пакета задач.
 func (b *Batch) Run() error {
 	// Запустим воркеры
 	wg := sync.WaitGroup{}
 	for w := 0; w < b.workersNum; w++ {
 		wg.Add(1)
-		go func(id int) {
-			b.worker(id)
+		go func() {
+			b.worker()
 			wg.Done()
-		}(w)
+		}()
 	}
 
 	// Дождемся завершения всех воркеров
@@ -64,8 +65,9 @@ func (b *Batch) Run() error {
 	return nil
 }
 
-// Worker
-func (b *Batch) worker(id int) {
+// Воркер.
+func (b *Batch) worker() {
+	// Вытаскиваем задачи из очереди, пока они незакончатся или не достигнется лимит ошибок
 	for task := range b.queue {
 		// Если лимит ошибок превышен, то больше задачи не берем и завершаем воркер
 		if b.IsTooManyErr() {
@@ -74,7 +76,6 @@ func (b *Batch) worker(id int) {
 
 		// Выполняем извлеченную задачу
 		err := task()
-
 		// Если были ошибки, то увеличиваем счетчик ошибок
 		if err != nil {
 			b.errMutex.Lock()
