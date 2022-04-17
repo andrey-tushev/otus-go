@@ -12,6 +12,29 @@ import (
 	"go.uber.org/goleak"
 )
 
+func TestCheck(t *testing.T) {
+	defer goleak.VerifyNone(t)
+
+	tasksCount := 10
+	tasks := make([]Task, 0, tasksCount)
+
+	var runTasksCount int32
+
+	for i := 0; i < tasksCount; i++ {
+		err := fmt.Errorf("error from task %d", i)
+		tasks = append(tasks, func() error {
+			time.Sleep(time.Millisecond * time.Duration(rand.Intn(100)))
+			atomic.AddInt32(&runTasksCount, 1)
+			return err
+		})
+	}
+
+	workersCount := 3
+	maxErrorsCount := 23
+	_ = Run(tasks, workersCount, maxErrorsCount)
+
+}
+
 func TestRun(t *testing.T) {
 	defer goleak.VerifyNone(t)
 
