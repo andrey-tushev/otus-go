@@ -90,4 +90,41 @@ func TestRun(t *testing.T) {
 		require.Equal(t, runTasksCount, int32(tasksCount), "not all tasks were completed")
 		require.LessOrEqual(t, int64(elapsedTime), int64(sumTime/2), "tasks were run sequentially?")
 	})
+
+	t.Run("random", func(t *testing.T) {
+		var count int32
+
+		qty := 100
+		successRatio := 0.7
+
+		successCnt := 0
+		failCnt := 0
+		count = 0
+
+		// Generate tasks
+		tasks := make([]Task, qty)
+		for i := 0; i < qty; i++ {
+			if rand.Float64() < successRatio {
+				// Make success task
+				successCnt++
+				tasks[i] = func() error {
+					time.Sleep(time.Millisecond * time.Duration(rand.Intn(100)))
+					atomic.AddInt32(&count, 1)
+					return nil
+				}
+			} else {
+				// Make failed task
+				failCnt++
+				tasks[i] = func() error {
+					time.Sleep(time.Millisecond * time.Duration(rand.Intn(100)))
+					return fmt.Errorf("error from task")
+				}
+			}
+		}
+
+		Run(tasks, 10, 10)
+		fmt.Printf("Success tasks: %d, Failed tasks: %d, Count %d \n", successCnt, failCnt, count)
+
+		//require.LessOrEqual(t, runTasksCount, int32(workersCount+maxErrorsCount), "extra tasks were started")
+	})
 }

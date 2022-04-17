@@ -10,36 +10,45 @@ var ErrErrorsLimitExceeded = errors.New("errors limit exceeded")
 
 type Task func() error
 
-type errCount struct {
-	sync.Mutex
-	Count int
-}
-
-func (e *errCount) Inc() {
-	e.Mutex.Lock()
-	e.Count++
-	e.Mutex.Unlock()
-}
-
-// Run starts tasks in n goroutines and stops its work when receiving m errors from tasks.
 func Run(tasks []Task, workersNum, maxErrors int) error {
+	batch := NewBatch(tasks, workersNum, maxErrors)
+	return batch.Run()
+}
+
+type Batch struct {
+	queue      chan Task
+	workersNum int
+	maxErrors  int
+	errCount   int
+	errMutex   sync.Mutex
+}
+
+func NewBatch(tasks []Task, workersNum, maxErrors int) Batch {
 	//fmt.Printf("Tasks number %d \n", len(tasks))
 
-	// Создадим очередь задач
-	queue := make(chan Task, len(tasks))
-	for _, task := range tasks {
-		queue <- task
+	b := Batch{
+		queue:      make(chan Task, len(tasks)),
+		workersNum: workersNum,
+		maxErrors:  maxErrors,
+		errCount:   0,
 	}
-	close(queue)
 
-	var ec errCount
+	// Заполним очередь задач
+	for _, task := range tasks {
+		b.queue <- task
+	}
+	close(b.queue)
 
+	return b
+}
+
+func (b *Batch) Run() error {
 	// Запустим воркеры
 	wg := sync.WaitGroup{}
-	for w := 0; w < workersNum; w++ {
+	for w := 0; w < b.workersNum; w++ {
 		wg.Add(1)
 		go func(id int) {
-			worker(id, queue, &ec)
+			b.worker(id)
 			wg.Done()
 		}(w)
 	}
@@ -47,21 +56,38 @@ func Run(tasks []Task, workersNum, maxErrors int) error {
 	// Дождемся завершения всех воркеров
 	wg.Wait()
 
+	if b.IsTooManyErr() {
+		return ErrErrorsLimitExceeded
+	}
+
 	return nil
 }
 
-// Вопрос: Почему каналы можно передавать по значению и все работает?
-
-func worker(workerId int, queue chan Task, ec *errCount) {
+func (b *Batch) worker(id int) {
 	//fmt.Printf("Worker %d start \n", workerId)
-	for task := range queue {
+	for task := range b.queue {
+		// Если лимит ошибок превышен, то больше задачи не берем и завершаем воркер
+		if b.IsTooManyErr() {
+			fmt.Println("TOO MANY")
+			return
+		}
+
 		//fmt.Printf("Worker %d processing \n", workerId)
 		err := task()
 		if err != nil {
-			ec.Inc()
+			b.errMutex.Lock()
+			b.errCount++
+			b.errMutex.Unlock()
 		}
 
-		fmt.Printf("Worker success %t \n", success)
+		//fmt.Printf("Worker success %t \n", err != nil)
 	}
 	//fmt.Printf("Worker %d finish \n", workerId)
+}
+
+func (b *Batch) IsTooManyErr() bool {
+	b.errMutex.Lock() // Вопрос: Нужны ли тут мьютексы или сравнение с int и так атомарно?
+	tooManyErr := b.errCount >= b.maxErrors
+	b.errMutex.Unlock()
+	return tooManyErr
 }
