@@ -2,7 +2,6 @@ package hw05parallelexecution
 
 import (
 	"errors"
-	"fmt"
 	"sync"
 )
 
@@ -15,6 +14,7 @@ func Run(tasks []Task, workersNum, maxErrors int) error {
 	return batch.Run()
 }
 
+// Запускалка пакета задач
 type Batch struct {
 	queue      chan Task
 	workersNum int
@@ -23,9 +23,8 @@ type Batch struct {
 	errMutex   sync.Mutex
 }
 
+// Конструктор
 func NewBatch(tasks []Task, workersNum, maxErrors int) Batch {
-	//fmt.Printf("Tasks number %d \n", len(tasks))
-
 	b := Batch{
 		queue:      make(chan Task, len(tasks)),
 		workersNum: workersNum,
@@ -42,6 +41,7 @@ func NewBatch(tasks []Task, workersNum, maxErrors int) Batch {
 	return b
 }
 
+// Запускалка пакета задач
 func (b *Batch) Run() error {
 	// Запустим воркеры
 	wg := sync.WaitGroup{}
@@ -56,6 +56,7 @@ func (b *Batch) Run() error {
 	// Дождемся завершения всех воркеров
 	wg.Wait()
 
+	// Возможно превышен лимит
 	if b.IsTooManyErr() {
 		return ErrErrorsLimitExceeded
 	}
@@ -63,26 +64,24 @@ func (b *Batch) Run() error {
 	return nil
 }
 
+// Worker
 func (b *Batch) worker(id int) {
-	//fmt.Printf("Worker %d start \n", workerId)
 	for task := range b.queue {
 		// Если лимит ошибок превышен, то больше задачи не берем и завершаем воркер
 		if b.IsTooManyErr() {
-			fmt.Println("TOO MANY")
 			return
 		}
 
-		//fmt.Printf("Worker %d processing \n", workerId)
+		// Выполняем извлеченную задачу
 		err := task()
+
+		// Если были ошибки, то увеличиваем счетчик ошибок
 		if err != nil {
 			b.errMutex.Lock()
 			b.errCount++
 			b.errMutex.Unlock()
 		}
-
-		//fmt.Printf("Worker success %t \n", err != nil)
 	}
-	//fmt.Printf("Worker %d finish \n", workerId)
 }
 
 func (b *Batch) IsTooManyErr() bool {

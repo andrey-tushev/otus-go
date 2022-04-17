@@ -92,39 +92,51 @@ func TestRun(t *testing.T) {
 	})
 
 	t.Run("random", func(t *testing.T) {
-		var count int32
-
-		qty := 100
-		successRatio := 0.7
-
-		successCnt := 0
-		failCnt := 0
-		count = 0
-
-		// Generate tasks
-		tasks := make([]Task, qty)
-		for i := 0; i < qty; i++ {
-			if rand.Float64() < successRatio {
-				// Make success task
-				successCnt++
-				tasks[i] = func() error {
-					time.Sleep(time.Millisecond * time.Duration(rand.Intn(100)))
-					atomic.AddInt32(&count, 1)
-					return nil
-				}
-			} else {
-				// Make failed task
-				failCnt++
-				tasks[i] = func() error {
-					time.Sleep(time.Millisecond * time.Duration(rand.Intn(100)))
-					return fmt.Errorf("error from task")
-				}
-			}
+		// Таблица тестов с разными параметрами
+		tests := []struct {
+			tasksQty     int     // Количество задач
+			successRatio float64 // Процент успешных
+			workers      int     // Количество воркеров
+			maxErrors    int     // Лимит ошибок
+		}{
+			{tasksQty: 100, successRatio: 0.66, workers: 10, maxErrors: 20},
+			{tasksQty: 50, successRatio: 0.66, workers: 2, maxErrors: 20},
+			{tasksQty: 20, successRatio: 0.66, workers: 5, maxErrors: 1},
+			{tasksQty: 100, successRatio: 0.66, workers: 50, maxErrors: 100},
+			{tasksQty: 10, successRatio: 0.5, workers: 3, maxErrors: 1},
 		}
 
-		Run(tasks, 10, 10)
-		fmt.Printf("Success tasks: %d, Failed tasks: %d, Count %d \n", successCnt, failCnt, count)
+		for _, test := range tests {
+			var launchCnt, successCnt, failCnt int32
 
-		//require.LessOrEqual(t, runTasksCount, int32(workersCount+maxErrorsCount), "extra tasks were started")
+			// Генерируем набор задач
+			tasks := make([]Task, test.tasksQty)
+			for i := 0; i < test.tasksQty; i++ {
+				if rand.Float64() < test.successRatio {
+					// Успешная задача
+					tasks[i] = func() error {
+						time.Sleep(time.Millisecond * time.Duration(rand.Intn(100)))
+						atomic.AddInt32(&launchCnt, 1)
+						atomic.AddInt32(&successCnt, 1)
+						return nil
+					}
+				} else {
+					// Задача с ошибкой
+					tasks[i] = func() error {
+						time.Sleep(time.Millisecond * time.Duration(rand.Intn(100)))
+						atomic.AddInt32(&launchCnt, 1)
+						atomic.AddInt32(&failCnt, 1)
+						return fmt.Errorf("error from task")
+					}
+				}
+			}
+
+			Run(tasks, test.workers, test.maxErrors)
+			// fmt.Printf("Launches: %d, Success: %d, Fail: %d \n", launchCnt, successCnt, failCnt)
+
+			// Количество запусков с ошибкой не может быть больше лимита ошибок
+			// плюс кол-во воркеров, т.к. некоторые задачи могут быть уже в работе, когда достигнется лимит ошибок
+			require.LessOrEqual(t, failCnt, int32(test.maxErrors+test.workers), "extra tasks were started")
+		}
 	})
 }
