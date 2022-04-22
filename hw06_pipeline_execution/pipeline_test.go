@@ -1,6 +1,7 @@
 package hw06pipelineexecution
 
 import (
+	"fmt"
 	"strconv"
 	"testing"
 	"time"
@@ -15,10 +16,11 @@ const (
 
 func TestPipeline(t *testing.T) {
 	// Stage generator
-	g := func(_ string, f func(v interface{}) interface{}) Stage {
+	g := func(name string, f func(v interface{}) interface{}) Stage {
 		return func(in In) Out {
 			out := make(Bi)
 			go func() {
+				fmt.Println("Gen ", name, "ready")
 				defer close(out)
 				for v := range in {
 					time.Sleep(sleepPerStage)
@@ -41,8 +43,10 @@ func TestPipeline(t *testing.T) {
 		data := []int{1, 2, 3, 4, 5}
 
 		go func() {
+			fmt.Println("Generator")
 			for _, v := range data {
 				in <- v
+				fmt.Println("Generated ", v)
 			}
 			close(in)
 		}()
