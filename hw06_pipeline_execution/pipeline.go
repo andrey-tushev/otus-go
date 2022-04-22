@@ -1,7 +1,5 @@
 package hw06pipelineexecution
 
-import "fmt"
-
 type (
 	In  = <-chan interface{}
 	Out = In
@@ -27,7 +25,6 @@ func ExecutePipeline(in In, done In, stages ...Stage) Out {
 					}
 
 				case <-done: // Сигнал на завершение
-					fmt.Println("DONE")
 					close(out)
 					return
 				}

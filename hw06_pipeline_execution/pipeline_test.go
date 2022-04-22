@@ -1,7 +1,6 @@
 package hw06pipelineexecution
 
 import (
-	"fmt"
 	"strconv"
 	"testing"
 	"time"
@@ -20,7 +19,6 @@ func TestPipeline(t *testing.T) {
 		return func(in In) Out {
 			out := make(Bi)
 			go func() {
-				fmt.Println("Gen ", name, "ready")
 				defer close(out)
 				for v := range in {
 					time.Sleep(sleepPerStage)
@@ -49,10 +47,8 @@ func TestPipeline(t *testing.T) {
 		data := []int{1, 2, 3, 4, 5}
 
 		go func() {
-			fmt.Println("Generator")
 			for _, v := range data {
 				in <- v
-				fmt.Println("Generated ", v)
 			}
 			close(in)
 		}()
@@ -106,10 +102,8 @@ func TestPipeline(t *testing.T) {
 		data := []int{}
 
 		go func() {
-			fmt.Println("Generator")
 			for _, v := range data {
 				in <- v
-				fmt.Println("Generated ", v)
 			}
 			close(in)
 		}()
@@ -126,10 +120,8 @@ func TestPipeline(t *testing.T) {
 		data := []int{1, 2, 3, 4, 5}
 
 		go func() {
-			fmt.Println("Generator")
 			for _, v := range data {
 				in <- v
-				fmt.Println("Generated ", v)
 			}
 			close(in)
 		}()
@@ -146,10 +138,8 @@ func TestPipeline(t *testing.T) {
 		data := []int{1, 2, 3, 4, 5}
 
 		go func() {
-			fmt.Println("Generator")
 			for _, v := range data {
 				in <- v
-				fmt.Println("Generated ", v)
 			}
 			close(in)
 		}()
