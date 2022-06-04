@@ -36,6 +36,12 @@ func TestPipeline(t *testing.T) {
 		g("Stringifier", func(v interface{}) interface{} { return strconv.Itoa(v.(int)) }),
 	}
 
+	stagesSingle := []Stage{
+		g("Multiplier (* 2)", func(v interface{}) interface{} { return v.(int) * 2 }),
+	}
+
+	stagesEmpty := []Stage{}
+
 	t.Run("simple case", func(t *testing.T) {
 		in := make(Bi)
 		data := []int{1, 2, 3, 4, 5}
@@ -89,5 +95,59 @@ func TestPipeline(t *testing.T) {
 
 		require.Len(t, result, 0)
 		require.Less(t, int64(elapsed), int64(abortDur)+int64(fault))
+	})
+
+	t.Run("empty case", func(t *testing.T) {
+		in := make(Bi)
+		data := []int{}
+
+		go func() {
+			for _, v := range data {
+				in <- v
+			}
+			close(in)
+		}()
+
+		result := make([]string, 0, 10)
+		for s := range ExecutePipeline(in, nil, stages...) {
+			result = append(result, s.(string))
+		}
+		require.Equal(t, []string{}, result)
+	})
+
+	t.Run("single stage", func(t *testing.T) {
+		in := make(Bi)
+		data := []int{1, 2, 3, 4, 5}
+
+		go func() {
+			for _, v := range data {
+				in <- v
+			}
+			close(in)
+		}()
+
+		result := make([]int, 0, 10)
+		for s := range ExecutePipeline(in, nil, stagesSingle...) {
+			result = append(result, s.(int))
+		}
+		require.Equal(t, []int{2, 4, 6, 8, 10}, result)
+	})
+
+	t.Run("empty stages", func(t *testing.T) {
+		in := make(Bi)
+		data := []int{1, 2, 3, 4, 5}
+
+		go func() {
+			for _, v := range data {
+				in <- v
+			}
+			close(in)
+		}()
+
+		result := make([]int, 0, 10)
+		for s := range ExecutePipeline(in, nil, stagesEmpty...) {
+			result = append(result, s.(int))
+		}
+		require.Equal(t, []int{1, 2, 3, 4, 5}, result)
 	})
 }
