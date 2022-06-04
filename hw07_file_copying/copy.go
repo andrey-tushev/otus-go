@@ -12,6 +12,17 @@ var (
 )
 
 func Copy(fromPath, toPath string, offset, limit int64) error {
+	stat, err := os.Stat(fromPath)
+	if err != nil {
+		return err
+	}
+	if stat.Size() == 0 {
+		return ErrUnsupportedFile
+	}
+	if offset > 0 && offset > stat.Size() {
+		return ErrOffsetExceedsFileSize
+	}
+
 	inFile, err := os.Open(fromPath)
 	if err != nil {
 		return err
@@ -24,7 +35,7 @@ func Copy(fromPath, toPath string, offset, limit int64) error {
 	}
 	defer outFile.Close()
 
-	const bufSize = 1000
+	const bufSize = 512
 	buf := make([]byte, bufSize)
 
 	if offset > 0 {
