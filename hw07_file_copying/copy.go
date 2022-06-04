@@ -102,7 +102,7 @@ func Copy(fromPath, toPath string, offset, limit int64) error {
 		}
 
 		bar.Increment()
-		//time.Sleep(500 * time.Millisecond) // для проверки прогресс бара
+		// time.Sleep(500 * time.Millisecond) // для проверки прогресс бара
 	}
 
 	return nil
