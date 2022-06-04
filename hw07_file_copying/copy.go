@@ -2,8 +2,12 @@ package main
 
 import (
 	"errors"
+	"fmt"
 	"io"
+	"math"
 	"os"
+
+	"github.com/cheggaaa/pb/v3"
 )
 
 var (
@@ -17,10 +21,16 @@ func Copy(fromPath, toPath string, offset, limit int64) error {
 	if err != nil {
 		return err
 	}
-	if stat.Size() == 0 {
+	size := stat.Size()
+	if size == 0 {
 		return ErrUnsupportedFile
 	}
-	if offset > 0 && offset > stat.Size() {
+
+	if limit == 0 {
+		limit = size - offset
+	}
+
+	if offset > 0 && offset > size {
 		return ErrOffsetExceedsFileSize
 	}
 
@@ -44,8 +54,18 @@ func Copy(fromPath, toPath string, offset, limit int64) error {
 	}
 
 	// Буфер для чтения
-	const bufSize = 512
+	const bufSize = 1000
 	buf := make([]byte, bufSize)
+
+	// Настроим прогресс бар
+	bytesToRead := int(limit)
+	if offset+limit > size {
+		bytesToRead = int(size - offset)
+	}
+	steps := int(math.Ceil(float64(bytesToRead) / float64(bufSize)))
+	bar := pb.StartNew(steps)
+	fmt.Println(bytesToRead, bufSize, steps)
+	defer bar.Finish()
 
 	// Цикл чтения по кусочкам
 	totalRead := 0
@@ -69,7 +89,7 @@ func Copy(fromPath, toPath string, offset, limit int64) error {
 
 		// Если задан лимит и мы его превысили, то уменьшим размер буфера,
 		// и укажем что это последняя итерация
-		if limit > 0 && totalRead > int(limit) {
+		if totalRead > int(limit) {
 			tail := bufSize - (totalRead - int(limit))
 			buf = buf[:tail]
 			done = true
@@ -80,6 +100,9 @@ func Copy(fromPath, toPath string, offset, limit int64) error {
 		if outErr != nil {
 			return outErr
 		}
+
+		bar.Increment()
+		//time.Sleep(500 * time.Millisecond) // для проверки прогресс бара
 	}
 
 	return nil
