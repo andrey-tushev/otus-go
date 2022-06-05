@@ -2,7 +2,6 @@ package main
 
 import (
 	"errors"
-	"fmt"
 	"io"
 	"math"
 	"os"
@@ -64,7 +63,6 @@ func Copy(fromPath, toPath string, offset, limit int64) error {
 	}
 	steps := int(math.Ceil(float64(bytesToRead) / float64(bufSize)))
 	bar := pb.StartNew(steps)
-	fmt.Println(bytesToRead, bufSize, steps)
 	defer bar.Finish()
 
 	// Цикл чтения по кусочкам
