@@ -2,6 +2,7 @@ package hw09structvalidator
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"testing"
 )
@@ -36,13 +37,27 @@ type (
 	}
 )
 
+func TestRun(t *testing.T) {
+	err := Validate(User{
+		ID:     "012345678901234567890123456789ABCDEF",
+		Name:   "Andrey",
+		Age:    43,
+		Email:  "andrey.tushev@gmail.com",
+		Role:   "admin",
+		Phones: []string{"71231234567", "11111222223"},
+		meta:   nil,
+	})
+	fmt.Println(err)
+}
+
 func TestValidate(t *testing.T) {
 	tests := []struct {
 		in          interface{}
 		expectedErr error
 	}{
 		{
-			// Place your code here.
+			App{Version: "12345"},
+			errors.New("Version has bad length"),
 		},
 		// ...
 		// Place your code here.
