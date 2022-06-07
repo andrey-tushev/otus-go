@@ -39,12 +39,12 @@ type (
 
 func TestRun(t *testing.T) {
 	err := Validate(User{
-		ID:     "012345678901234567890123456789ABCDEF",
+		ID:     "-012345678901234567890123456789ABCDEF",
 		Name:   "Andrey",
-		Age:    43,
-		Email:  "andrey.tushev@gmail.com",
+		Age:    143,
+		Email:  "and#rey@example.com",
 		Role:   "admin",
-		Phones: []string{"71231234567", "11111222223"},
+		Phones: []string{"71231234567", "71231234568", "123"},
 		meta:   nil,
 	})
 	fmt.Println(err)

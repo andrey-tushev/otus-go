@@ -2,8 +2,8 @@ package hw09structvalidator
 
 import (
 	"errors"
-	"fmt"
 	"reflect"
+	"regexp"
 	"strconv"
 	"strings"
 )
@@ -15,8 +15,15 @@ type ValidationError struct {
 
 type ValidationErrors []ValidationError
 
+func (v *ValidationErrors) add(field string, err error) {
+	*v = append(*v, ValidationError{
+		Field: field,
+		Err:   err,
+	})
+}
+
 func (v ValidationError) Error() string {
-	return v.Field + " has " + v.Err.Error()
+	return v.Field + " " + v.Err.Error()
 }
 
 func (v ValidationErrors) Error() string {
@@ -31,6 +38,8 @@ func (v ValidationErrors) Error() string {
 }
 
 func Validate(v interface{}) error {
+	validationErrors := ValidationErrors{}
+
 	val := reflect.ValueOf(v)
 	if val.Kind() != reflect.Struct {
 		return errors.New("not a struct")
@@ -38,8 +47,8 @@ func Validate(v interface{}) error {
 
 	valType := val.Type()
 	for f := 0; f < valType.NumField(); f++ {
-		fieldType := valType.Field(f)
-		tag := fieldType.Tag.Get("validate")
+		structField := valType.Field(f)
+		tag := structField.Tag.Get("validate")
 
 		if tag == "" {
 			continue
@@ -49,23 +58,21 @@ func Validate(v interface{}) error {
 			if len(nameAndValue) != 2 {
 				return errors.New("bad rule")
 			}
-			err := validateValue(val.Field(f), nameAndValue[0], nameAndValue[1])
+			err := validateByRule(val.Field(f), nameAndValue[0], nameAndValue[1])
 			if err != nil {
-				fmt.Println(fieldType.Name, err)
+				validationErrors.add(structField.Name, err)
 			}
-
 		}
+	}
 
-		//
+	if len(validationErrors) > 0 {
+		return validationErrors
 	}
 
 	return nil
 }
 
-func validateValue(value reflect.Value, ruleName, ruleValue string) error {
-
-	//fmt.Println(value.Type(), value.String(), ruleName, ruleValue)
-
+func validateByRule(value reflect.Value, ruleName, ruleValue string) error {
 	switch value.Kind() {
 	case reflect.String:
 		stringValue := value.String()
@@ -74,10 +81,15 @@ func validateValue(value reflect.Value, ruleName, ruleValue string) error {
 		case "len":
 			length, _ := strconv.Atoi(ruleValue)
 			if len(stringValue) != length {
-				return errors.New("wrong length")
+				return errors.New("has wrong length")
 			}
 
 		case "regexp":
+			re, _ := regexp.Compile(ruleValue)
+			if !re.Match([]byte(stringValue)) {
+				return errors.New("has bad format")
+			}
+
 		case "in":
 			ok := false
 			for _, allowedValue := range strings.Split(ruleValue, ",") {
@@ -87,7 +99,7 @@ func validateValue(value reflect.Value, ruleName, ruleValue string) error {
 				}
 			}
 			if !ok {
-				return errors.New("illegal value")
+				return errors.New("contains illegal value")
 			}
 		}
 
@@ -98,12 +110,12 @@ func validateValue(value reflect.Value, ruleName, ruleValue string) error {
 		case "min":
 			min, _ := strconv.Atoi(ruleValue)
 			if intValue < min {
-				return errors.New("too small")
+				return errors.New("is too small")
 			}
 		case "max":
 			max, _ := strconv.Atoi(ruleValue)
 			if intValue > max {
-				return errors.New("too big")
+				return errors.New("is too big")
 			}
 		case "in":
 			ok := false
@@ -115,18 +127,19 @@ func validateValue(value reflect.Value, ruleName, ruleValue string) error {
 				}
 			}
 			if !ok {
-				return errors.New("illegal value")
+				return errors.New("contains illegal value")
 			}
 		}
 
 	case reflect.Slice:
-
 		for i := 0; i < value.Len(); i++ {
-			//item := value.Index(i)
-			//err := validateValue(value reflect.Value, ruleName, ruleValue string)
+			item := value.Index(i)
 
+			err := validateByRule(item, ruleName, ruleValue)
+			if err != nil {
+				return err
+			}
 		}
-
 	}
 
 	return nil
