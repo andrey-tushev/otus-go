@@ -14,7 +14,7 @@ type UserRole string
 // Test the function on different structures and other types.
 type (
 	BadTTag struct {
-		field string `json:"id" validate:"blah-blah-blah"`
+		Field string `json:"id" validate:"blah-blah-blah"`
 	}
 
 	User struct {
@@ -44,7 +44,7 @@ type (
 )
 
 func TestNonValidationErrors(t *testing.T) {
-	err := Validate(BadTTag{})
+	err := Validate(BadTTag{"something"})
 	require.Error(t, err, ErrBadRule)
 
 	err = Validate("not a struct type")
@@ -90,7 +90,13 @@ func TestValidate(t *testing.T) {
 				Phones: []string{"71231234567", "71231234568", "123"},
 				meta:   nil,
 			},
-			errors.New("ID has wrong length, Age is too big, Email has bad format, Role contains illegal value, Phones has wrong length"),
+			errors.New(
+				"ID has wrong length, " +
+					"Age is too big, " +
+					"Email has bad format, " +
+					"Role contains illegal value, " +
+					"Phones has wrong length",
+			),
 		},
 	}
 
@@ -106,7 +112,6 @@ func TestValidate(t *testing.T) {
 				require.ErrorAs(t, err, &ValidationErrors{})
 				require.Equal(t, tt.expectedErr.Error(), err.Error())
 			}
-
 		})
 	}
 }

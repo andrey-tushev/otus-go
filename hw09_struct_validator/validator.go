@@ -10,13 +10,13 @@ import (
 
 const validateTag = "validate"
 
-// Общие ошибки
+// Общие ошибки.
 var (
 	ErrNotAStruct = errors.New("not a struct")
 	ErrBadRule    = errors.New("bad rule")
 )
 
-// Ошибки валидации
+// Ошибки валидации.
 var (
 	ErrWrongLength  = errors.New("has wrong length")
 	ErrBadFormat    = errors.New("has bad format")
@@ -90,67 +90,17 @@ func Validate(v interface{}) error {
 	return nil
 }
 
-// validateByRule валидирует одно значение по одному правилу
+// validateByRule валидирует одно значение по одному правилу.
 func validateByRule(value reflect.Value, ruleName, ruleValue string) error {
+	//exhaustive:ignore - иначе потребуется перечислить все возможные Kind-ы и default не поможет
 	switch value.Kind() {
 	// Валидация для строк
 	case reflect.String:
-		stringValue := value.String()
-
-		switch ruleName {
-		case "len":
-			length, _ := strconv.Atoi(ruleValue)
-			if len(stringValue) != length {
-				return ErrWrongLength
-			}
-
-		case "regexp":
-			re, _ := regexp.Compile(ruleValue)
-			if !re.Match([]byte(stringValue)) {
-				return ErrBadFormat
-			}
-
-		case "in":
-			ok := false
-			for _, allowedValue := range strings.Split(ruleValue, ",") {
-				if stringValue == allowedValue {
-					ok = true
-					break
-				}
-			}
-			if !ok {
-				return ErrIllegalValue
-			}
-		}
+		return validateStringByRule(value.String(), ruleName, ruleValue)
 
 	// Валидация для интов
 	case reflect.Int:
-		intValue := int(value.Int())
-
-		switch ruleName {
-		case "min":
-			min, _ := strconv.Atoi(ruleValue)
-			if intValue < min {
-				return ErrTooSmall
-			}
-		case "max":
-			max, _ := strconv.Atoi(ruleValue)
-			if intValue > max {
-				return ErrTooBig
-			}
-		case "in":
-			ok := false
-			for _, allowedValue := range strings.Split(ruleValue, ",") {
-				av, _ := strconv.Atoi(allowedValue)
-				if intValue == av {
-					ok = true
-					break
-				}
-			}
-			if !ok {
-				return ErrIllegalValue
-			}
-		}
+		return validateIntByRule(int(value.Int()), ruleName, ruleValue)
 
 	// Валидация для слайсов
 	case reflect.Slice:
@@ -162,6 +112,69 @@ func validateByRule(value reflect.Value, ruleName, ruleValue string) error {
 			if err != nil {
 				return err
 			}
+		}
+
+	default:
+	}
+
+	return nil
+}
+
+// validateStringByRule валидирует строку по одному правилу.
+func validateStringByRule(stringValue string, ruleName, ruleValue string) error {
+	switch ruleName {
+	case "len":
+		length, _ := strconv.Atoi(ruleValue)
+		if len(stringValue) != length {
+			return ErrWrongLength
+		}
+
+	case "regexp":
+		re, _ := regexp.Compile(ruleValue)
+		if !re.Match([]byte(stringValue)) {
+			return ErrBadFormat
+		}
+
+	case "in":
+		ok := false
+		for _, allowedValue := range strings.Split(ruleValue, ",") {
+			if stringValue == allowedValue {
+				ok = true
+				break
+			}
+		}
+		if !ok {
+			return ErrIllegalValue
+		}
+	}
+
+	return nil
+}
+
+// validateStringByRule валидирует инт по одному правилу.
+func validateIntByRule(intValue int, ruleName, ruleValue string) error {
+	switch ruleName {
+	case "min":
+		min, _ := strconv.Atoi(ruleValue)
+		if intValue < min {
+			return ErrTooSmall
+		}
+	case "max":
+		max, _ := strconv.Atoi(ruleValue)
+		if intValue > max {
+			return ErrTooBig
+		}
+	case "in":
+		ok := false
+		for _, allowedValue := range strings.Split(ruleValue, ",") {
+			av, _ := strconv.Atoi(allowedValue)
+			if intValue == av {
+				ok = true
+				break
+			}
+		}
+		if !ok {
+			return ErrIllegalValue
 		}
 	}
 
