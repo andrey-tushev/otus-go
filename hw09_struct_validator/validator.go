@@ -8,6 +8,23 @@ import (
 	"strings"
 )
 
+const validateTag = "validate"
+
+// Общие ошибки
+var (
+	ErrNotAStruct = errors.New("not a struct")
+	ErrBadRule    = errors.New("bad rule")
+)
+
+// Ошибки валидации
+var (
+	ErrWrongLength  = errors.New("has wrong length")
+	ErrBadFormat    = errors.New("has bad format")
+	ErrIllegalValue = errors.New("contains illegal value")
+	ErrTooSmall     = errors.New("is too small")
+	ErrTooBig       = errors.New("is too big")
+)
+
 type ValidationError struct {
 	Field string
 	Err   error
@@ -42,21 +59,22 @@ func Validate(v interface{}) error {
 
 	val := reflect.ValueOf(v)
 	if val.Kind() != reflect.Struct {
-		return errors.New("not a struct")
+		return ErrNotAStruct
 	}
 
 	valType := val.Type()
 	for f := 0; f < valType.NumField(); f++ {
 		structField := valType.Field(f)
-		tag := structField.Tag.Get("validate")
+		tag := structField.Tag.Get(validateTag)
 
+		// Если тек валидации не пустой, то разбираем его и запускаем валидацию для каждого из правил
 		if tag == "" {
 			continue
 		}
 		for _, rule := range strings.Split(tag, "|") {
 			nameAndValue := strings.Split(rule, ":")
 			if len(nameAndValue) != 2 {
-				return errors.New("bad rule")
+				return ErrBadRule
 			}
 			err := validateByRule(val.Field(f), nameAndValue[0], nameAndValue[1])
 			if err != nil {
@@ -72,8 +90,10 @@ func Validate(v interface{}) error {
 	return nil
 }
 
+// validateByRule валидирует одно значение по одному правилу
 func validateByRule(value reflect.Value, ruleName, ruleValue string) error {
 	switch value.Kind() {
+	// Валидация для строк
 	case reflect.String:
 		stringValue := value.String()
 
@@ -81,13 +101,13 @@ func validateByRule(value reflect.Value, ruleName, ruleValue string) error {
 		case "len":
 			length, _ := strconv.Atoi(ruleValue)
 			if len(stringValue) != length {
-				return errors.New("has wrong length")
+				return ErrWrongLength
 			}
 
 		case "regexp":
 			re, _ := regexp.Compile(ruleValue)
 			if !re.Match([]byte(stringValue)) {
-				return errors.New("has bad format")
+				return ErrBadFormat
 			}
 
 		case "in":
@@ -99,10 +119,11 @@ func validateByRule(value reflect.Value, ruleName, ruleValue string) error {
 				}
 			}
 			if !ok {
-				return errors.New("contains illegal value")
+				return ErrIllegalValue
 			}
 		}
 
+	// Валидация для интов
 	case reflect.Int:
 		intValue := int(value.Int())
 
@@ -110,12 +131,12 @@ func validateByRule(value reflect.Value, ruleName, ruleValue string) error {
 		case "min":
 			min, _ := strconv.Atoi(ruleValue)
 			if intValue < min {
-				return errors.New("is too small")
+				return ErrTooSmall
 			}
 		case "max":
 			max, _ := strconv.Atoi(ruleValue)
 			if intValue > max {
-				return errors.New("is too big")
+				return ErrTooBig
 			}
 		case "in":
 			ok := false
@@ -127,14 +148,16 @@ func validateByRule(value reflect.Value, ruleName, ruleValue string) error {
 				}
 			}
 			if !ok {
-				return errors.New("contains illegal value")
+				return ErrIllegalValue
 			}
 		}
 
+	// Валидация для слайсов
 	case reflect.Slice:
+
+		// Валидируем каждый элемент слайса
 		for i := 0; i < value.Len(); i++ {
 			item := value.Index(i)
-
 			err := validateByRule(item, ruleName, ruleValue)
 			if err != nil {
 				return err
