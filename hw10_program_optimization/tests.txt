@@ -1,0 +1,3 @@
+Old
+    stats_optimization_test.go:45: time used: 653.244035ms / 300ms
+    stats_optimization_test.go:46: memory used: 292Mb / 30Mb
