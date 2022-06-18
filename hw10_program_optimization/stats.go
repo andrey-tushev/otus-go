@@ -2,14 +2,16 @@ package hw10programoptimization
 
 import (
 	"bufio"
-	"encoding/json"
 	"errors"
 	"fmt"
 	"io"
 	"regexp"
 	"strings"
+
+	"github.com/mailru/easyjson"
 )
 
+//easyjson:json
 type User struct {
 	Email string
 }
@@ -38,7 +40,7 @@ func calcStat(r io.Reader, suffix string) (DomainStat, error) {
 	for scanner.Scan() {
 		line := scanner.Text()
 
-		if err := json.Unmarshal([]byte(line), &user); err != nil {
+		if err := easyjson.Unmarshal([]byte(line), &user); err != nil {
 			return DomainStat{}, err
 		}
 		if !strings.HasSuffix(user.Email, suffix) {
@@ -55,7 +57,9 @@ func calcStat(r io.Reader, suffix string) (DomainStat, error) {
 			continue
 		}
 
-		stat[domain]++
+		// ЧТО ЗА ДИЧЬ!!!???
+		stat[domain] += 1 // Получаем расход 39Mb RAM (тест по расходу памяти падает)
+		//stat[domain] += 2 // Все ОК по RAM (тест по расходу памяти проходит, но конечно падает по статистике)
 	}
 
 	return stat, nil
