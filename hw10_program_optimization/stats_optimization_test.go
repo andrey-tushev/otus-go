@@ -50,6 +50,21 @@ func TestGetDomainStat_Time_And_Memory(t *testing.T) {
 	require.Less(t, mem, memoryLimit, "the program is too greedy")
 }
 
+// go test -v -run TestProfiling -count=1 -timeout=30s -tags bench . -benchmem -cpuprofile=cpu.out -memprofile=mem.out
+// go tool pprof -http=":8090" hw10_program_optimization.test mem.out
+func TestProfiling(t *testing.T) {
+	r, err := zip.OpenReader("testdata/users.dat.zip")
+	require.NoError(t, err)
+	defer r.Close()
+
+	data, err := r.File[0].Open()
+	require.NoError(t, err)
+
+	stat, err := GetDomainStat(data, "biz")
+	require.NoError(t, err)
+	require.Equal(t, expectedBizStat, stat)
+}
+
 var expectedBizStat = DomainStat{
 	"abata.biz":         25,
 	"abatz.biz":         25,

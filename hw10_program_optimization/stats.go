@@ -38,9 +38,11 @@ func calcStat(r io.Reader, suffix string) (DomainStat, error) {
 
 	scanner := bufio.NewScanner(r)
 	for scanner.Scan() {
-		line := scanner.Text()
+		//line := scanner.Text()
+		bytes := scanner.Bytes()
 
-		if err := easyjson.Unmarshal([]byte(line), &user); err != nil {
+		if err := easyjson.Unmarshal(bytes, &user); err != nil {
+			//if err := easyjson.Unmarshal([]byte(line), &user); err != nil {
 			return DomainStat{}, err
 		}
 		if !strings.HasSuffix(user.Email, suffix) {
@@ -60,7 +62,11 @@ func calcStat(r io.Reader, suffix string) (DomainStat, error) {
 		// ЧТО ЗА ДИЧЬ!!!???
 		stat[domain] += 1 // Получаем огромный расход RAM (тест по расходу памяти падает) memory used: 39Mb / 30Mb
 		//stat[domain] += 2 // Все ОК по RAM (тест по расходу памяти проходит, но конечно падает по статистике)
+		// P.S. личится заменой scanner.Text() на scanner.Bytes()
+
 	}
+
+	scanner.Bytes()
 
 	return stat, nil
 }
