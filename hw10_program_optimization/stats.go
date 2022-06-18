@@ -58,7 +58,7 @@ func calcStat(r io.Reader, suffix string) (DomainStat, error) {
 		}
 
 		// ЧТО ЗА ДИЧЬ!!!???
-		stat[domain] += 1 // Получаем расход 39Mb RAM (тест по расходу памяти падает)
+		stat[domain] += 1 // Получаем огромный расход RAM (тест по расходу памяти падает) memory used: 39Mb / 30Mb
 		//stat[domain] += 2 // Все ОК по RAM (тест по расходу памяти проходит, но конечно падает по статистике)
 	}
 
