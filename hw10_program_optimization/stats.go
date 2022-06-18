@@ -1,67 +1,62 @@
 package hw10programoptimization
 
 import (
+	"bufio"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"regexp"
 	"strings"
 )
 
 type User struct {
-	ID       int
-	Name     string
-	Username string
-	Email    string
-	Phone    string
-	Password string
-	Address  string
+	Email string
 }
 
 type DomainStat map[string]int
 
+var emailRE *regexp.Regexp
+
+func init() {
+	emailRE = regexp.MustCompile(`^[0-9a-z_\-\.]+@([0-9aa-z\.]+\.([a-z]+))$`)
+}
+
 func GetDomainStat(r io.Reader, domain string) (DomainStat, error) {
-	u, err := getUsers(r)
+	s, err := calcStat(r, domain)
 	if err != nil {
 		return nil, fmt.Errorf("get users error: %w", err)
 	}
-	return countDomains(u, domain)
+	return s, nil
 }
 
-type users [100_000]User
+func calcStat(r io.Reader, suffix string) (DomainStat, error) {
+	var user User
+	stat := make(DomainStat)
 
-func getUsers(r io.Reader) (result users, err error) {
-	content, err := ioutil.ReadAll(r)
-	if err != nil {
-		return
-	}
+	scanner := bufio.NewScanner(r)
+	for scanner.Scan() {
+		line := scanner.Text()
 
-	lines := strings.Split(string(content), "\n")
-	for i, line := range lines {
-		var user User
-		if err = json.Unmarshal([]byte(line), &user); err != nil {
-			return
+		if err := json.Unmarshal([]byte(line), &user); err != nil {
+			return DomainStat{}, err
 		}
-		result[i] = user
-	}
-	return
-}
+		if !strings.HasSuffix(user.Email, suffix) {
+			continue
+		}
+		email := strings.ToLower(user.Email)
+		m := emailRE.FindStringSubmatch(email)
+		if m == nil {
+			return DomainStat{}, errors.New("bad email")
+		}
+		domain, tld := m[1], m[2]
 
-func countDomains(u users, domain string) (DomainStat, error) {
-	result := make(DomainStat)
-
-	for _, user := range u {
-		matched, err := regexp.Match("\\."+domain, []byte(user.Email))
-		if err != nil {
-			return nil, err
+		if tld != suffix {
+			continue
 		}
 
-		if matched {
-			num := result[strings.ToLower(strings.SplitN(user.Email, "@", 2)[1])]
-			num++
-			result[strings.ToLower(strings.SplitN(user.Email, "@", 2)[1])] = num
-		}
+		stat[domain]++
 	}
-	return result, nil
+
+	return stat, nil
 }
