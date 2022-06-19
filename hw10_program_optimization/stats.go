@@ -17,10 +17,10 @@ type User struct {
 	Email string
 }
 
-// DomainStat - статистика по доменам
+// DomainStat - статистика по доменам.
 type DomainStat map[string]int
 
-// emailRE - регулярка для парсинга email
+// emailRE - регулярка для парсинга email.
 var emailRE *regexp.Regexp
 
 func init() {
@@ -35,7 +35,7 @@ func GetDomainStat(r io.Reader, domain string) (DomainStat, error) {
 	return s, nil
 }
 
-// calcStat поточно читает данные и поточно накапливает статистику
+// calcStat поточно читает данные и поточно накапливает статистику.
 func calcStat(r io.Reader, suffix string) (DomainStat, error) {
 	var user User
 	stat := make(DomainStat)
