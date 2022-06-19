@@ -15,7 +15,7 @@ const buffSize = 1024
 
 type TelnetClient interface {
 	Connect() error
-	//io.Closer
+	// io.Closer - Почему то на этом падает линтар на GitHub, но все ОК на локальном линтере.
 	Close() error
 	Send() error
 	Receive() error

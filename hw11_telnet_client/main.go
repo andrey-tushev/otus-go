@@ -57,6 +57,7 @@ func main() {
 	wg.Add(1)
 	go func() {
 		defer wg.Done()
+
 		scanner := bufio.NewScanner(os.Stdin)
 		for {
 			if !scanner.Scan() {
@@ -90,7 +91,4 @@ func main() {
 	wg.Wait()
 
 	fmt.Fprintln(os.Stderr, "communication finished")
-
-	// Place your code here,
-	// P.S. Do not rush to throw context down, think think if it is useful with blocking operation?
 }
