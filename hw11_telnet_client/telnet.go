@@ -3,8 +3,11 @@ package main
 import (
 	"context"
 	"errors"
+	"fmt"
 	"io"
 	"net"
+	"os"
+	"os/signal"
 	"time"
 )
 
@@ -41,6 +44,15 @@ func (t *telnetClient) Connect() error {
 	}
 	ctx := context.Background()
 	ctx, cancel := context.WithTimeout(ctx, t.timeout)
+	defer cancel()
+
+	termSignal := make(chan os.Signal, 1)
+	signal.Notify(termSignal, os.Interrupt)
+	go func() {
+		<-termSignal
+		fmt.Fprintln(os.Stderr, "received SIGINT")
+		t.conn.Close()
+	}()
 
 	conn, err := dialer.DialContext(ctx, "tcp", t.address)
 	if err != nil {
@@ -81,5 +93,4 @@ func (t *telnetClient) Receive() error {
 	return nil
 }
 
-// Place your code here.
 // P.S. Author's solution takes no more than 50 lines.
