@@ -6,7 +6,8 @@
 
     cpu: Intel(R) Core(TM) i7-9750H CPU @ 2.60GHz
     BenchmarkGetDomainStat
-    BenchmarkGetDomainStat-12    	  877502	      1285 ns/op
+    BenchmarkGetDomainStat-12    	     124	   8645165 ns/op
+
 
 ## После оптимизации
     stats_optimization_test.go:46: time used: 145.435453ms / 300ms
@@ -14,7 +15,7 @@
 
     cpu: Intel(R) Core(TM) i7-9750H CPU @ 2.60GHz
     BenchmarkGetDomainStat
-    BenchmarkGetDomainStat-12    	  877502	      1285 ns/op
+    BenchmarkGetDomainStat-12    	 1715498	       647.9 ns/op
 
 # Профилирование
 
