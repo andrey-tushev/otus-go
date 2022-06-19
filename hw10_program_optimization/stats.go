@@ -11,13 +11,16 @@ import (
 	"github.com/mailru/easyjson"
 )
 
+//go:generate easyjson
 //easyjson:json
 type User struct {
 	Email string
 }
 
+// DomainStat - статистика по доменам
 type DomainStat map[string]int
 
+// emailRE - регулярка для парсинга email
 var emailRE *regexp.Regexp
 
 func init() {
@@ -27,27 +30,31 @@ func init() {
 func GetDomainStat(r io.Reader, domain string) (DomainStat, error) {
 	s, err := calcStat(r, domain)
 	if err != nil {
-		return nil, fmt.Errorf("get users error: %w", err)
+		return nil, fmt.Errorf("input data error: %w", err)
 	}
 	return s, nil
 }
 
+// calcStat поточно читает данные и поточно накапливает статистику
 func calcStat(r io.Reader, suffix string) (DomainStat, error) {
 	var user User
 	stat := make(DomainStat)
 
 	scanner := bufio.NewScanner(r)
 	for scanner.Scan() {
-		//line := scanner.Text()
 		bytes := scanner.Bytes()
 
+		// вытаскиваем email
 		if err := easyjson.Unmarshal(bytes, &user); err != nil {
-			//if err := easyjson.Unmarshal([]byte(line), &user); err != nil {
 			return DomainStat{}, err
 		}
+
+		// если не оканчивается на нужный суффикс, дальше даже не смотрим (оптимизация)
 		if !strings.HasSuffix(user.Email, suffix) {
 			continue
 		}
+
+		// парсим email
 		email := strings.ToLower(user.Email)
 		m := emailRE.FindStringSubmatch(email)
 		if m == nil {
@@ -55,18 +62,14 @@ func calcStat(r io.Reader, suffix string) (DomainStat, error) {
 		}
 		domain, tld := m[1], m[2]
 
+		// нам интересны только заданные tld
 		if tld != suffix {
 			continue
 		}
 
-		// ЧТО ЗА ДИЧЬ!!!???
-		stat[domain] += 1 // Получаем огромный расход RAM (тест по расходу памяти падает) memory used: 39Mb / 30Mb
-		//stat[domain] += 2 // Все ОК по RAM (тест по расходу памяти проходит, но конечно падает по статистике)
-		// P.S. личится заменой scanner.Text() на scanner.Bytes()
-
+		// накапливаем статистику по доменам
+		stat[domain]++
 	}
-
-	scanner.Bytes()
 
 	return stat, nil
 }
