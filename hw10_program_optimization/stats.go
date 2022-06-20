@@ -1,67 +1,75 @@
 package hw10programoptimization
 
 import (
-	"encoding/json"
+	"bufio"
+	"errors"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"regexp"
 	"strings"
+
+	"github.com/mailru/easyjson"
 )
 
+//go:generate easyjson
+//easyjson:json
 type User struct {
-	ID       int
-	Name     string
-	Username string
-	Email    string
-	Phone    string
-	Password string
-	Address  string
+	Email string
 }
 
+// DomainStat - статистика по доменам.
 type DomainStat map[string]int
 
+// emailRE - регулярка для парсинга email.
+var emailRE *regexp.Regexp
+
+func init() {
+	emailRE = regexp.MustCompile(`^[0-9a-z_\-\.]+@([0-9aa-z\.]+\.([a-z]+))$`)
+}
+
 func GetDomainStat(r io.Reader, domain string) (DomainStat, error) {
-	u, err := getUsers(r)
+	s, err := calcStat(r, domain)
 	if err != nil {
-		return nil, fmt.Errorf("get users error: %w", err)
+		return nil, fmt.Errorf("input data error: %w", err)
 	}
-	return countDomains(u, domain)
+	return s, nil
 }
 
-type users [100_000]User
+// calcStat поточно читает данные и поточно накапливает статистику.
+func calcStat(r io.Reader, suffix string) (DomainStat, error) {
+	var user User
+	stat := make(DomainStat)
 
-func getUsers(r io.Reader) (result users, err error) {
-	content, err := ioutil.ReadAll(r)
-	if err != nil {
-		return
-	}
+	scanner := bufio.NewScanner(r)
+	for scanner.Scan() {
+		bytes := scanner.Bytes()
 
-	lines := strings.Split(string(content), "\n")
-	for i, line := range lines {
-		var user User
-		if err = json.Unmarshal([]byte(line), &user); err != nil {
-			return
-		}
-		result[i] = user
-	}
-	return
-}
-
-func countDomains(u users, domain string) (DomainStat, error) {
-	result := make(DomainStat)
-
-	for _, user := range u {
-		matched, err := regexp.Match("\\."+domain, []byte(user.Email))
-		if err != nil {
-			return nil, err
+		// вытаскиваем email
+		if err := easyjson.Unmarshal(bytes, &user); err != nil {
+			return DomainStat{}, err
 		}
 
-		if matched {
-			num := result[strings.ToLower(strings.SplitN(user.Email, "@", 2)[1])]
-			num++
-			result[strings.ToLower(strings.SplitN(user.Email, "@", 2)[1])] = num
+		// если не оканчивается на нужный суффикс, дальше даже не смотрим (оптимизация)
+		if !strings.HasSuffix(user.Email, suffix) {
+			continue
 		}
+
+		// парсим email
+		email := strings.ToLower(user.Email)
+		m := emailRE.FindStringSubmatch(email)
+		if m == nil {
+			return DomainStat{}, errors.New("bad email")
+		}
+		domain, tld := m[1], m[2]
+
+		// нам интересны только заданные tld
+		if tld != suffix {
+			continue
+		}
+
+		// накапливаем статистику по доменам
+		stat[domain]++
 	}
-	return result, nil
+
+	return stat, nil
 }
