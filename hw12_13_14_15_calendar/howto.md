@@ -1,4 +1,6 @@
+# Перераскатка миграций
 
-goose postgres "postgres://calendar:calendar@localhost/calendar?sslmode=disable" status
+```bash
+goose postgres "postgres://calendar:calendar@localhost/calendar?sslmode=disable" redo
+```
 
-goose create add_some_column sql
