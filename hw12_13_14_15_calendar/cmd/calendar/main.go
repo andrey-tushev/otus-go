@@ -64,12 +64,13 @@ func main() {
 
 	server := internalhttp.NewServer(logg, calendar)
 
+	// Останавливалка сервера
 	ctx, cancel := signal.NotifyContext(context.Background(),
 		syscall.SIGINT, syscall.SIGTERM, syscall.SIGHUP)
 	defer cancel()
 
 	go func() {
-		<-ctx.Done()
+		<-ctx.Done() // получение сигнала
 
 		ctx, cancel := context.WithTimeout(context.Background(), time.Second*3)
 		defer cancel()
@@ -80,6 +81,7 @@ func main() {
 		}
 	}()
 
+	// Запускалка сервера
 	logg.Info("calendar is running...")
 
 	if err := server.Start(ctx); err != nil {

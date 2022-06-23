@@ -3,6 +3,7 @@ package sqlstorage
 import (
 	"context"
 
+	"github.com/google/uuid"
 	_ "github.com/jackc/pgx/stdlib"
 	"github.com/jmoiron/sqlx"
 
@@ -21,7 +22,7 @@ func New(dsn string) *Storage {
 }
 
 func (s *Storage) Connect(ctx context.Context) error {
-	db, err := sqlx.Open("pgx", "postgres://calendar:calendar@localhost/calendar")
+	db, err := sqlx.Open("pgx", s.dsn)
 
 	if err != nil {
 		return err
@@ -31,6 +32,11 @@ func (s *Storage) Connect(ctx context.Context) error {
 	return nil
 }
 
+func (s *Storage) Exec(ctx context.Context, query string) error {
+	_, err := s.db.ExecContext(ctx, query)
+	return err
+}
+
 func (s *Storage) Close(ctx context.Context) error {
 	s.db.Close()
 
@@ -38,21 +44,70 @@ func (s *Storage) Close(ctx context.Context) error {
 }
 
 func (s *Storage) CreateEvent(ctx context.Context, event storage.Event) (string, error) {
-	//TODO implement me
-	panic("implement me")
+	id := uuid.New().String()
+	event.ID = id
+	query := `
+		INSERT INTO events(id, title, date_time, duration, text, user_id, remind)
+		VALUES (:id, :title, :date_time, :duration, :text, :user_id, :remind)
+	`
+	_, err := s.db.NamedExecContext(ctx, query, event)
+	if err != nil {
+		return "", err
+	}
+	return id, nil
 }
 
 func (s *Storage) UpdateEvent(ctx context.Context, event storage.Event) error {
-	//TODO implement me
-	panic("implement me")
+	query := `
+		UPDATE events
+		SET 
+		    title 		= :title, 
+		    date_time 	= :date_time, 
+		    duration 	= :duration, 
+		    text 		= :text, 
+		    user_id 	= :user_id, 
+		    remind 		= :remind
+		WHERE id = :id		
+	`
+	_, err := s.db.NamedExecContext(ctx, query, event)
+	if err != nil {
+		return err
+	}
+	return nil
 }
 
 func (s *Storage) DeleteEvent(ctx context.Context, id string) error {
-	//TODO implement me
-	panic("implement me")
+	query := `
+		DELETE FROM events		
+		WHERE id = $1		
+	`
+	_, err := s.db.ExecContext(ctx, query, id)
+	if err != nil {
+		return err
+	}
+	return nil
 }
 
 func (s *Storage) ListEvents(ctx context.Context) ([]storage.Event, error) {
-	//TODO implement me
-	panic("implement me")
+	res := []storage.Event{}
+
+	query := `SELECT * FROM events`
+	rows, err := s.db.QueryxContext(ctx, query)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	list := storage.Event{}
+	for rows.Next() {
+		if err := rows.StructScan(&list); err != nil {
+			return nil, err
+		}
+		res = append(res, list)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+
+	return res, nil
 }
