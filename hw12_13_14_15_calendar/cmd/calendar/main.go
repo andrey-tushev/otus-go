@@ -3,21 +3,22 @@ package main
 import (
 	"context"
 	"flag"
+	"fmt"
 	"os"
 	"os/signal"
 	"syscall"
 	"time"
 
-	"github.com/fixme_my_friend/hw12_13_14_15_calendar/internal/app"
-	"github.com/fixme_my_friend/hw12_13_14_15_calendar/internal/logger"
-	internalhttp "github.com/fixme_my_friend/hw12_13_14_15_calendar/internal/server/http"
-	memorystorage "github.com/fixme_my_friend/hw12_13_14_15_calendar/internal/storage/memory"
+	"github.com/andrey-tushev/hw12_13_14_15_calendar/internal/app"
+	"github.com/andrey-tushev/hw12_13_14_15_calendar/internal/logger"
+	internalhttp "github.com/andrey-tushev/hw12_13_14_15_calendar/internal/server/http"
+	memorystorage "github.com/andrey-tushev/hw12_13_14_15_calendar/internal/storage/memory"
 )
 
 var configFile string
 
 func init() {
-	flag.StringVar(&configFile, "config", "/etc/calendar/config.toml", "Path to configuration file")
+	flag.StringVar(&configFile, "config", "./configs/config.toml", "Path to configuration file")
 }
 
 func main() {
@@ -29,6 +30,11 @@ func main() {
 	}
 
 	config := NewConfig()
+	if err := config.Parse(configFile); err != nil {
+		fmt.Println(err)
+		os.Exit(1)
+	}
+
 	logg := logger.New(config.Logger.Level)
 
 	storage := memorystorage.New()
@@ -46,6 +52,7 @@ func main() {
 		ctx, cancel := context.WithTimeout(context.Background(), time.Second*3)
 		defer cancel()
 
+		fmt.Println("terminating...")
 		if err := server.Stop(ctx); err != nil {
 			logg.Error("failed to stop http server: " + err.Error())
 		}

@@ -1,5 +1,8 @@
 [logger]
-level = "INFO"
+# Уровень логирования (info - логгировать все, error - только ошибки)
+level = "info"
 
-# TODO
-# ...
+# memory или sql
+storage = "memory"
+
+[postgres]
