@@ -2,9 +2,9 @@ package memorystorage
 
 import (
 	"context"
-	"errors"
 	"sync"
 
+	"github.com/andrey-tushev/hw12_13_14_15_calendar/internal/app"
 	"github.com/andrey-tushev/hw12_13_14_15_calendar/internal/storage"
 
 	"github.com/google/uuid"
@@ -37,7 +37,7 @@ func (s Storage) UpdateEvent(ctx context.Context, event storage.Event) error {
 
 	_, has := s.events[event.ID]
 	if !has {
-		return errors.New("not found")
+		return app.ErrNotFound
 	}
 	s.events[event.ID] = event
 
@@ -50,7 +50,7 @@ func (s Storage) DeleteEvent(ctx context.Context, id string) error {
 
 	_, has := s.events[id]
 	if !has {
-		return errors.New("not found")
+		return app.ErrNotFound
 	}
 	delete(s.events, id)
 

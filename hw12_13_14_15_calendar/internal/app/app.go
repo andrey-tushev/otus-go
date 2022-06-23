@@ -28,7 +28,7 @@ func New(logger Logger, storage Storage) *App {
 	}
 }
 
-func (a *App) CreateEvent(ctx context.Context, event Event) error {
+func (a *App) CreateEvent(ctx context.Context, event Event) (string, error) {
 	return a.storage.CreateEvent(ctx, eventAppToStorage(event))
 }
 

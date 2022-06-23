@@ -13,6 +13,7 @@ import (
 	"github.com/andrey-tushev/hw12_13_14_15_calendar/internal/logger"
 	internalhttp "github.com/andrey-tushev/hw12_13_14_15_calendar/internal/server/http"
 	memorystorage "github.com/andrey-tushev/hw12_13_14_15_calendar/internal/storage/memory"
+	sqlstorage "github.com/andrey-tushev/hw12_13_14_15_calendar/internal/storage/sql"
 )
 
 var configFile string
@@ -29,15 +30,36 @@ func main() {
 		return
 	}
 
+	// Загружаем конфигурацию
 	config := NewConfig()
 	if err := config.Parse(configFile); err != nil {
 		fmt.Println(err)
 		os.Exit(1)
 	}
 
+	// Настраиваем логгер
 	logg := logger.New(config.Logger.Level)
 
-	storage := memorystorage.New()
+	// Выбираем и настраиваем хранилище
+	var storage app.Storage
+	switch config.Storage.Storage {
+	case "memory":
+		storage = memorystorage.New()
+	case "sql":
+		sqlStorage := sqlstorage.New(config.Sql.DSN)
+		err := sqlStorage.Connect(context.Background())
+		if err != nil {
+			fmt.Println(err)
+			os.Exit(1)
+		}
+		defer sqlStorage.Close(context.Background())
+		storage = sqlStorage
+	default:
+		fmt.Println("unknown Storage")
+		os.Exit(1)
+	}
+
+	// Запускаем приложение
 	calendar := app.New(logg, storage)
 
 	server := internalhttp.NewServer(logg, calendar)

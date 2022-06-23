@@ -11,12 +11,20 @@ import (
 // при их конструировании только необходимые параметры, а также уменьшает вероятность циклической зависимости.
 type Config struct {
 	Logger  LoggerConf
-	Storage string
+	Storage StorageConf
+	Sql     SqlConf
 }
 
 type LoggerConf struct {
 	Level string
-	// TODO
+}
+
+type StorageConf struct {
+	Storage string
+}
+
+type SqlConf struct {
+	DSN string
 }
 
 func NewConfig() Config {
