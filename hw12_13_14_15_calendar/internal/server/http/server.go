@@ -30,7 +30,7 @@ func (s *Server) Start(ctx context.Context) error {
 
 	server := &http.Server{
 		Addr:         "localhost:8080",
-		Handler:      s,
+		Handler:      s.loggingMiddleware(s),
 		ReadTimeout:  1 * time.Second,
 		WriteTimeout: 1 * time.Second,
 	}
@@ -47,7 +47,6 @@ func (s *Server) Stop(ctx context.Context) error {
 }
 
 func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	s.logger.Info(reqLogMessage(r))
 
 	switch r.URL.Path {
 	case "/hello":
@@ -57,13 +56,4 @@ func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		http.NotFound(w, r)
 
 	}
-}
-
-func reqLogMessage(r *http.Request) string {
-	return "http request " +
-		r.RemoteAddr + " " +
-		time.Now().String() + " " +
-		r.Method + " " +
-		r.RequestURI + " " +
-		r.Header.Get("User-Agent")
 }
