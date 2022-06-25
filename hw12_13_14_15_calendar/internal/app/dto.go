@@ -6,8 +6,8 @@ type Event struct {
 	ID       string
 	Title    string
 	DateTime time.Time
-	Duration time.Duration
+	Duration int
 	Text     string
-	UserId   string
-	Remind   time.Duration
+	UserId   int
+	Remind   int
 }
