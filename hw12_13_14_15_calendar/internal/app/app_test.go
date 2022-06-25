@@ -12,10 +12,11 @@ import (
 	"github.com/andrey-tushev/hw12_13_14_15_calendar/internal/storage"
 )
 
-func TestBusiness(t *testing.T) {
+func TestCheckAccessibility(t *testing.T) {
 	ctx := context.Background()
 
 	logger := &mocks.Logger{}
+	logger.On("Info", mock.Anything)
 
 	stor := &mocks.Storage{}
 	stor.On("ListEvents", mock.Anything).Return(
