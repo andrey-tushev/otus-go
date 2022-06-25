@@ -4,8 +4,11 @@ level = "info"
 
 # memory или sql
 [storage]
-#storage = "memory"
-storage = "sql"
+storage = "memory"
 
 [sql]
 dsn = "postgres://calendar:calendar@localhost/calendar"
+
+[web]
+host = "127.0.0.1"
+port = 8080
