@@ -11,7 +11,11 @@ type App struct {
 	storage Storage
 }
 
-type Logger interface { // TODO
+type Logger interface {
+	Error(msg string)
+	Warn(msg string)
+	Info(msg string)
+	Debug(msg string)
 }
 
 type Storage interface {
