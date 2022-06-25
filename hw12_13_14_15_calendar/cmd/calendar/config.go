@@ -13,6 +13,7 @@ type Config struct {
 	Logger  LoggerConf
 	Storage StorageConf
 	SQL     SQLConf
+	Web     WebConf
 }
 
 type LoggerConf struct {
@@ -25,6 +26,11 @@ type StorageConf struct {
 
 type SQLConf struct {
 	DSN string
+}
+
+type WebConf struct {
+	Host string
+	Port string
 }
 
 func NewConfig() Config {

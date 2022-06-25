@@ -2,13 +2,15 @@ package internalhttp
 
 import (
 	"context"
+	"net"
 	"net/http"
 	"time"
 )
 
 type Server struct {
-	logger Logger
-	app    Application
+	logger     Logger
+	app        Application
+	httpServer *http.Server
 }
 
 type Logger interface {
@@ -25,35 +27,33 @@ func NewServer(logger Logger, app Application) *Server {
 	}
 }
 
-func (s *Server) Start(ctx context.Context) error {
+func (s *Server) Start(ctx context.Context, host string, port string) error {
 	s.logger.Info("web-server start")
 
-	server := &http.Server{
-		Addr:         "localhost:8080",
+	s.httpServer = &http.Server{
+		Addr:         net.JoinHostPort(host, port),
 		Handler:      s.loggingMiddleware(s),
 		ReadTimeout:  1 * time.Second,
 		WriteTimeout: 1 * time.Second,
 	}
-	server.ListenAndServe()
+	s.httpServer.ListenAndServe()
 
 	<-ctx.Done()
 	return nil
 }
 
 func (s *Server) Stop(ctx context.Context) error {
+	s.httpServer.Shutdown(ctx)
 	s.logger.Info("web-server stop")
 
 	return nil
 }
 
 func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-
 	switch r.URL.Path {
 	case "/hello":
 		w.Write([]byte("hello-world"))
-
 	default:
 		http.NotFound(w, r)
-
 	}
 }

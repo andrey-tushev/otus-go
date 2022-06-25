@@ -91,7 +91,7 @@ func retMain() int {
 	// Запускалка сервера
 	logg.Info("calendar is running...")
 
-	if err := server.Start(ctx); err != nil {
+	if err := server.Start(ctx, config.Web.Host, config.Web.Port); err != nil {
 		logg.Error("failed to start http server: " + err.Error())
 		cancel()
 		return 1
