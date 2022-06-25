@@ -11,12 +11,13 @@ import (
 )
 
 type Storage struct {
-	mu     sync.RWMutex
+	mu     *sync.RWMutex
 	events map[string]storage.Event
 }
 
 func New() *Storage {
 	return &Storage{
+		mu:     &sync.RWMutex{},
 		events: make(map[string]storage.Event),
 	}
 }

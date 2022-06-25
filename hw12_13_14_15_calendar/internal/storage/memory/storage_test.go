@@ -2,6 +2,8 @@ package memorystorage
 
 import (
 	"context"
+	"strconv"
+	"sync"
 	"testing"
 
 	"github.com/stretchr/testify/require"
@@ -52,4 +54,30 @@ func TestStorage(t *testing.T) {
 			t.Fatal("bad id in the list")
 		}
 	}
+}
+
+func TestMultithreading(t *testing.T) {
+	ctx := context.Background()
+	stor := New()
+
+	const threads = 10
+	const records = 1000
+
+	wg := &sync.WaitGroup{}
+	wg.Add(threads)
+
+	for t := 0; t < threads; t++ {
+		go func() {
+			defer wg.Done()
+			for i := 0; i < records; i++ {
+				stor.CreateEvent(ctx, storage.Event{Title: strconv.Itoa(i)})
+			}
+		}()
+	}
+
+	wg.Wait()
+
+	list, err := stor.ListEvents(ctx)
+	require.NoError(t, err)
+	require.Equal(t, threads*records, len(list))
 }
