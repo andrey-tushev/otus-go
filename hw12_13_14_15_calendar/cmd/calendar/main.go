@@ -23,18 +23,25 @@ func init() {
 }
 
 func main() {
+	// Так сделано чтобы можно было использовать код возврата через os.Exit
+	// и при этом отрабатывали deffer-ы
+	ret := retMain()
+	os.Exit(ret)
+}
+
+func retMain() int {
 	flag.Parse()
 
 	if flag.Arg(0) == "version" {
 		printVersion()
-		return
+		return 1
 	}
 
 	// Загружаем конфигурацию
 	config := NewConfig()
 	if err := config.Parse(configFile); err != nil {
 		fmt.Println(err)
-		os.Exit(1)
+		return 1
 	}
 
 	// Настраиваем логгер
@@ -46,17 +53,17 @@ func main() {
 	case "memory":
 		storage = memorystorage.New()
 	case "sql":
-		sqlStorage := sqlstorage.New(config.Sql.DSN)
+		sqlStorage := sqlstorage.New(config.SQL.DSN)
 		err := sqlStorage.Connect(context.Background())
 		if err != nil {
 			fmt.Println(err)
-			os.Exit(1)
+			return 1
 		}
 		defer sqlStorage.Close(context.Background())
 		storage = sqlStorage
 	default:
-		fmt.Println("unknown Storage")
-		os.Exit(1)
+		fmt.Println("unknown storage")
+		return 1
 	}
 
 	// Запускаем приложение
@@ -87,6 +94,8 @@ func main() {
 	if err := server.Start(ctx); err != nil {
 		logg.Error("failed to start http server: " + err.Error())
 		cancel()
-		os.Exit(1) //nolint:gocritic
+		return 1
 	}
+
+	return 0
 }

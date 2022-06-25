@@ -12,7 +12,7 @@ import (
 type Config struct {
 	Logger  LoggerConf
 	Storage StorageConf
-	Sql     SqlConf
+	SQL     SQLConf
 }
 
 type LoggerConf struct {
@@ -23,7 +23,7 @@ type StorageConf struct {
 	Storage string
 }
 
-type SqlConf struct {
+type SQLConf struct {
 	DSN string
 }
 
@@ -34,7 +34,7 @@ func NewConfig() Config {
 func (c *Config) Parse(path string) error {
 	_, err := toml.DecodeFile(path, &c)
 	if err != nil {
-		return fmt.Errorf("config read error: %v", err)
+		return fmt.Errorf("config read error: %w", err)
 	}
 	return nil
 }
