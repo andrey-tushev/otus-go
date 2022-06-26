@@ -4,7 +4,7 @@ import (
 	"context"
 
 	"github.com/google/uuid"
-	_ "github.com/jackc/pgx/stdlib"
+	_ "github.com/jackc/pgx/stdlib" //nolint:golint
 	"github.com/jmoiron/sqlx"
 
 	"github.com/andrey-tushev/hw12_13_14_15_calendar/internal/storage"
@@ -23,7 +23,6 @@ func New(dsn string) *Storage {
 
 func (s *Storage) Connect(ctx context.Context) error {
 	db, err := sqlx.Open("pgx", s.dsn)
-
 	if err != nil {
 		return err
 	}

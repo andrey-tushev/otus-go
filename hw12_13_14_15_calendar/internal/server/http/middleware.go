@@ -12,7 +12,7 @@ func (s *Server) loggingMiddleware(next http.Handler) http.Handler {
 
 		start := time.Now()
 		next.ServeHTTP(lrw, r)
-		latency := time.Now().Sub(start)
+		latency := time.Since(start)
 
 		message := fmt.Sprintf("http %s [%s] %s %s %s %d %d %s",
 			r.RemoteAddr,
@@ -28,16 +28,16 @@ func (s *Server) loggingMiddleware(next http.Handler) http.Handler {
 
 // Кастомный ResponseWriter, который позволяет вытащить http код.
 // ASK: Можно ли решить это как то менее костыльно?
-type loggingResponseWriter struct {
+type LoggingResponseWriter struct {
 	http.ResponseWriter
 	StatusCode int
 }
 
-func NewLoggingResponseWriter(w http.ResponseWriter) *loggingResponseWriter {
-	return &loggingResponseWriter{w, http.StatusOK}
+func NewLoggingResponseWriter(w http.ResponseWriter) *LoggingResponseWriter {
+	return &LoggingResponseWriter{w, http.StatusOK}
 }
 
-func (lrw *loggingResponseWriter) WriteHeader(code int) {
+func (lrw *LoggingResponseWriter) WriteHeader(code int) {
 	lrw.StatusCode = code
 	lrw.ResponseWriter.WriteHeader(code)
 }

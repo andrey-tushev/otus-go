@@ -4,10 +4,10 @@ import (
 	"context"
 	"sync"
 
+	"github.com/google/uuid"
+
 	"github.com/andrey-tushev/hw12_13_14_15_calendar/internal/app"
 	"github.com/andrey-tushev/hw12_13_14_15_calendar/internal/storage"
-
-	"github.com/google/uuid"
 )
 
 type Storage struct {
@@ -36,8 +36,7 @@ func (s Storage) UpdateEvent(ctx context.Context, event storage.Event) error {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 
-	_, has := s.events[event.ID]
-	if !has {
+	if _, has := s.events[event.ID]; !has {
 		return app.ErrNotFound
 	}
 	s.events[event.ID] = event
@@ -49,8 +48,7 @@ func (s Storage) DeleteEvent(ctx context.Context, id string) error {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 
-	_, has := s.events[id]
-	if !has {
+	if _, has := s.events[id]; !has {
 		return app.ErrNotFound
 	}
 	delete(s.events, id)

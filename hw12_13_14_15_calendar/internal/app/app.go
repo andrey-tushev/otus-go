@@ -53,26 +53,24 @@ func (a *App) DeleteEvent(ctx context.Context, id string) error {
 func (a *App) ListEvents(ctx context.Context) ([]Event, error) {
 	list, err := a.storage.ListEvents(ctx)
 	if err != nil {
-		return []Event{}, nil
+		return nil, err
 	}
 
-	var events = make([]Event, 0, len(list))
+	events := make([]Event, 0, len(list))
 	for _, e := range list {
 		events = append(events, eventStorageToApp(e))
 	}
 	return events, nil
 }
 
-// TODO: Написать тест на эту сложную бизнес логику
 func (a *App) checkAccessibility(ctx context.Context, event Event) error {
 	list, err := a.storage.ListEvents(ctx)
 	if err != nil {
-		return nil
+		return err
 	}
 	for _, item := range list {
 		if event.DateTime.Unix()+int64(event.Duration) >= item.DateTime.Unix() &&
 			event.DateTime.Unix() <= item.DateTime.Unix()+int64(item.Duration) {
-
 			return ErrDateBusy
 		}
 	}

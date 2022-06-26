@@ -46,11 +46,12 @@ func TestStorage(t *testing.T) {
 	require.Len(t, list, 2)
 
 	for _, item := range list {
-		if item.ID == id2 {
+		switch item.ID {
+		case id2:
 			require.Equal(t, "Title 2A", item.Title)
-		} else if item.ID == id3 {
+		case id3:
 			require.Equal(t, "Title 3", item.Title)
-		} else {
+		default:
 			t.Fatal("bad id in the list")
 		}
 	}

@@ -23,12 +23,12 @@ func TestCheckAccessibility(t *testing.T) {
 		[]storage.Event{
 			{
 				Title:    "event 1",
-				DateTime: time.Date(2022, 06, 25, 0, 0, 0, 0, time.Local),
+				DateTime: time.Date(2022, 12, 25, 0, 0, 0, 0, time.Local),
 				Duration: 60 * 60,
 			},
 			{
 				Title:    "event 2",
-				DateTime: time.Date(2022, 06, 26, 0, 0, 0, 0, time.Local),
+				DateTime: time.Date(2022, 12, 26, 0, 0, 0, 0, time.Local),
 				Duration: 60 * 60,
 			},
 		}, nil)
@@ -37,14 +37,14 @@ func TestCheckAccessibility(t *testing.T) {
 
 	err := app.checkAccessibility(ctx, Event{
 		Title:    "new event",
-		DateTime: time.Date(2022, 06, 25, 2, 0, 0, 0, time.Local),
+		DateTime: time.Date(2022, 12, 25, 2, 0, 0, 0, time.Local),
 		Duration: 60 * 60,
 	})
 	require.NoError(t, err)
 
 	err = app.checkAccessibility(ctx, Event{
 		Title:    "new event",
-		DateTime: time.Date(2022, 06, 25, 0, 30, 0, 0, time.Local),
+		DateTime: time.Date(2022, 12, 25, 0, 30, 0, 0, time.Local),
 		Duration: 60 * 60,
 	})
 	require.Error(t, err)

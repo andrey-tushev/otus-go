@@ -11,7 +11,7 @@ func eventAppToStorage(event Event) storage.Event {
 		DateTime: event.DateTime,
 		Duration: event.Duration,
 		Text:     event.Text,
-		UserId:   event.UserId,
+		UserID:   event.UserID,
 		Remind:   event.Remind,
 	}
 }
@@ -23,7 +23,7 @@ func eventStorageToApp(event storage.Event) Event {
 		DateTime: event.DateTime,
 		Duration: event.Duration,
 		Text:     event.Text,
-		UserId:   event.UserId,
+		UserID:   event.UserID,
 		Remind:   event.Remind,
 	}
 }
