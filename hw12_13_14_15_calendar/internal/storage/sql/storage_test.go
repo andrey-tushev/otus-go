@@ -1,5 +1,6 @@
 package sqlstorage
 
+//nolint:gci
 import (
 	"context"
 	"testing"

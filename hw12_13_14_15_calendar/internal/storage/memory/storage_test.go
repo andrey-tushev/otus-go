@@ -1,5 +1,6 @@
 package memorystorage
 
+//nolint:gci
 import (
 	"context"
 	"strconv"

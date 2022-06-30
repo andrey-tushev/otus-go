@@ -1,5 +1,6 @@
 package app
 
+//nolint:gci
 import (
 	"context"
 	"testing"
