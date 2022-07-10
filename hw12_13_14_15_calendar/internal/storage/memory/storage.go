@@ -5,8 +5,8 @@ import (
 	"context"
 	"sync"
 
-	"github.com/andrey-tushev/hw12_13_14_15_calendar/internal/app"
-	"github.com/andrey-tushev/hw12_13_14_15_calendar/internal/storage"
+	"github.com/andrey-tushev/otus-go/hw12_13_14_15_calendar/internal/app"
+	"github.com/andrey-tushev/otus-go/hw12_13_14_15_calendar/internal/storage"
 
 	"github.com/google/uuid"
 )

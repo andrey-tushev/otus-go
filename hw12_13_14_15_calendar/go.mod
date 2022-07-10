@@ -1,4 +1,4 @@
-module github.com/andrey-tushev/hw12_13_14_15_calendar
+module github.com/andrey-tushev/otus-go/hw12_13_14_15_calendar
 
 go 1.16
 

@@ -5,7 +5,7 @@ package mocks
 import (
 	context "context"
 
-	storage "github.com/andrey-tushev/hw12_13_14_15_calendar/internal/storage"
+	storage "github.com/andrey-tushev/otus-go/hw12_13_14_15_calendar/internal/storage"
 	mock "github.com/stretchr/testify/mock"
 )
 
