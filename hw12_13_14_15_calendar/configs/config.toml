@@ -1,5 +1,15 @@
 [logger]
-level = "INFO"
+# Уровень логирования (info - логгировать все, error - только ошибки)
+level = "info"
 
-# TODO
-# ...
+# memory или sql
+[storage]
+storage = "memory"
+
+[sql]
+dsn = "postgres://calendar:calendar@localhost/calendar"
+
+[web]
+host = "127.0.0.1"
+port = "8080"
+

@@ -1,7 +1,13 @@
 package storage
 
+import "time"
+
 type Event struct {
-	ID    string
-	Title string
-	// TODO
+	ID       string    `db:"id"`
+	Title    string    `db:"title"`
+	DateTime time.Time `db:"date_time"`
+	Duration int       `db:"duration"` // хотел использовать time.Duration, но sqlx не умеет конвертировать такое :-(
+	Text     string    `db:"text"`
+	UserID   int       `db:"user_id"`
+	Remind   int       `db:"remind"`
 }
