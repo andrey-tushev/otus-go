@@ -2,14 +2,21 @@ package hw09structvalidator
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"testing"
+
+	"github.com/stretchr/testify/require"
 )
 
 type UserRole string
 
 // Test the function on different structures and other types.
 type (
+	BadTTag struct {
+		Field string `json:"id" validate:"blah-blah-blah"`
+	}
+
 	User struct {
 		ID     string `json:"id" validate:"len:36"`
 		Name   string
@@ -36,16 +43,61 @@ type (
 	}
 )
 
+func TestNonValidationErrors(t *testing.T) {
+	err := Validate(BadTTag{"something"})
+	require.Error(t, err, ErrBadRule)
+
+	err = Validate("not a struct type")
+	require.Error(t, err, ErrNotAStruct)
+}
+
 func TestValidate(t *testing.T) {
 	tests := []struct {
 		in          interface{}
 		expectedErr error
 	}{
+		{App{Version: "12345"}, nil},
+		{App{Version: "1234500"}, ValidationError{Field: "Version", Err: ErrWrongLength}},
+		{App{Version: "123"}, ValidationError{Field: "Version", Err: ErrWrongLength}},
+
+		{Token{}, nil},
+		{Token{Header: []byte("aaaaa"), Payload: []byte("bbbbb"), Signature: []byte("ccccc")}, nil},
+
+		{Response{Code: 200}, nil},
+		{Response{Code: 404}, nil},
+		{Response{}, ValidationError{Field: "Code", Err: ErrIllegalValue}},
+		{Response{Code: 100}, ValidationError{Field: "Code", Err: ErrIllegalValue}},
+
 		{
-			// Place your code here.
+			User{
+				ID:     "012345678901234567890123456789ABCDEF",
+				Name:   "Andrey",
+				Age:    43,
+				Email:  "andrey@example.com",
+				Role:   "admin",
+				Phones: []string{"71231234567", "71231234568", "71231234569"},
+				meta:   nil,
+			},
+			nil,
 		},
-		// ...
-		// Place your code here.
+		{
+			User{
+				ID:     "-012345678901234567890123456789ABCDEF",
+				Name:   "Andrey",
+				Age:    143,
+				Email:  "and#rey@example.com",
+				Role:   "boss",
+				Phones: []string{"71231234567", "71231234568", "123"},
+				meta:   nil,
+			},
+			errors.New(
+				"ID has wrong length, " +
+					"Age is too big, " +
+					"Email has bad format, " +
+					"Role contains illegal value, " +
+					"Phones has wrong length",
+			),
+		},
 	}
 
 	for i, tt := range tests {
@@ -53,8 +105,13 @@ func TestValidate(t *testing.T) {
 			tt := tt
 			t.Parallel()
 
-			// Place your code here.
-			_ = tt
+			err := Validate(tt.in)
+			if tt.expectedErr == nil {
+				require.NoError(t, err)
+			} else {
+				require.ErrorAs(t, err, &ValidationErrors{})
+				require.Equal(t, tt.expectedErr.Error(), err.Error())
+			}
 		})
 	}
 }

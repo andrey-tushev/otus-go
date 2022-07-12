@@ -63,3 +63,9 @@ func TestTelnetClient(t *testing.T) {
 		wg.Wait()
 	})
 }
+
+func TestBadHost(t *testing.T) {
+	client := NewTelnetClient("127.0.0.111:", 10*time.Second, ioutil.NopCloser(nil), ioutil.Discard)
+	err := client.Connect()
+	require.Error(t, err)
+}
