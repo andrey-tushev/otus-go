@@ -16,6 +16,7 @@ message CreateEventRequest {
   Event Event = 1;
 }
 message CreateEventResponse {
+  string ID = 1;
 }
 
 message UpdateEventRequest {
@@ -30,14 +31,14 @@ message ListEventsRequest {
   int64 month = 3;
 }
 message ListEventsResponse {
-  repeated Event Event = 1;
+  repeated Event Events = 1;
 }
 
 
 message Event {
   string ID = 1;
   string Title = 2;
-  google.protobuf.Duration DateTime = 3;
+  int64 DateTime = 3;
   int64 Duration = 4;
   string Text = 5;
   int64 UserID = 6;
