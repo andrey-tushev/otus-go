@@ -1,14 +1,15 @@
 package internalhttp
 
+// nolint
 import (
 	"context"
 	"net"
 	"net/http"
 	"time"
 
-	"github.com/go-chi/chi/v5"
-
 	"github.com/andrey-tushev/otus-go/hw12_13_14_15_calendar/internal/app"
+
+	"github.com/go-chi/chi/v5"
 )
 
 type Server struct {

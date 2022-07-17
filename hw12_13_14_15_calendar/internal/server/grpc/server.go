@@ -1,14 +1,15 @@
 package internalgrpc
 
+// nolint
 import (
 	"context"
 	"errors"
 	"net"
 
-	"google.golang.org/grpc"
-
 	"github.com/andrey-tushev/otus-go/hw12_13_14_15_calendar/internal/app"
 	pb "github.com/andrey-tushev/otus-go/hw12_13_14_15_calendar/protobuf"
+
+	"google.golang.org/grpc"
 )
 
 type Server struct {
@@ -38,7 +39,6 @@ func NewServer(logger Logger, app Application) *Server {
 }
 
 func (s *Server) Start(ctx context.Context, port string) error {
-
 	lsn, err := net.Listen("tcp", ":"+port)
 	if err != nil {
 		return errors.New("failed to start grpc listener: " + err.Error())
@@ -48,7 +48,6 @@ func (s *Server) Start(ctx context.Context, port string) error {
 	pb.RegisterEventsServer(s.grpcServer, s)
 	err = s.grpcServer.Serve(lsn)
 	if err != nil {
-
 		return errors.New("failed to serve rpc: " + err.Error())
 	}
 

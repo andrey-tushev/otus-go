@@ -28,12 +28,12 @@ func (s *Server) CreateEvent(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	newId, err := s.app.CreateEvent(context.Background(), event)
+	newID, err := s.app.CreateEvent(context.Background(), event)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
-	event.ID = newId
+	event.ID = newID
 
 	responseBody, _ := json.Marshal(event)
 	w.Header().Set("Content-Type", "application/json")
