@@ -69,6 +69,10 @@ func (a *App) checkAccessibility(ctx context.Context, event Event) error {
 		return err
 	}
 	for _, item := range list {
+		if item.ID == event.ID {
+			continue
+		}
+
 		if event.DateTime.Unix()+int64(event.Duration) >= item.DateTime.Unix() &&
 			event.DateTime.Unix() <= item.DateTime.Unix()+int64(item.Duration) {
 			return ErrDateBusy

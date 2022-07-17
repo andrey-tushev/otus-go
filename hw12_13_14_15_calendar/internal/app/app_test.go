@@ -23,11 +23,13 @@ func TestCheckAccessibility(t *testing.T) {
 	stor.On("ListEvents", mock.Anything).Return(
 		[]storage.Event{
 			{
+				ID:       "1001",
 				Title:    "event 1",
 				DateTime: time.Date(2022, 12, 25, 0, 0, 0, 0, time.Local),
 				Duration: 60 * 60,
 			},
 			{
+				ID:       "1002",
 				Title:    "event 2",
 				DateTime: time.Date(2022, 12, 26, 0, 0, 0, 0, time.Local),
 				Duration: 60 * 60,
