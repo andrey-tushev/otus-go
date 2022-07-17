@@ -23,8 +23,6 @@ version: build
 	$(BIN) version
 
 test:
-# ASK: А как мне тут тестить internal/storage/sql, он требует живой Postgres
-# go test -race ./internal/... ./pkg/...
 	go test -race ./internal/storage/memory/... ./internal/app/...
 
 install-lint-deps:
@@ -32,5 +30,8 @@ install-lint-deps:
 
 lint: install-lint-deps
 	golangci-lint run ./...
+
+protobuf:
+	protoc --go_out=. --go-grpc_out=. api/EventService.proto
 
 .PHONY: build run build-img run-img version test lint

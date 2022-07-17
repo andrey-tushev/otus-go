@@ -44,7 +44,7 @@ func (s *Server) Start(ctx context.Context, host string, port string) error {
 
 func (s *Server) Stop(ctx context.Context) error {
 	s.httpServer.Shutdown(ctx)
-	s.logger.Info("web-server stop")
+	s.logger.Info("web-server stopped")
 
 	return nil
 }
