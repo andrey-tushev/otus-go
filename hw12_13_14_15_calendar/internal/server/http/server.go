@@ -5,6 +5,10 @@ import (
 	"net"
 	"net/http"
 	"time"
+
+	"github.com/go-chi/chi/v5"
+
+	"github.com/andrey-tushev/otus-go/hw12_13_14_15_calendar/internal/app"
 )
 
 type Server struct {
@@ -17,7 +21,11 @@ type Logger interface {
 	Info(msg string)
 }
 
-type Application interface { // TODO
+type Application interface {
+	CreateEvent(ctx context.Context, event app.Event) (string, error)
+	UpdateEvent(ctx context.Context, event app.Event) error
+	DeleteEvent(ctx context.Context, id string) error
+	ListEvents(ctx context.Context) ([]app.Event, error)
 }
 
 func NewServer(logger Logger, app Application) *Server {
@@ -50,10 +58,16 @@ func (s *Server) Stop(ctx context.Context) error {
 }
 
 func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	switch r.URL.Path {
-	case "/hello":
+	router := chi.NewRouter()
+
+	router.Get("/hello", func(w http.ResponseWriter, r *http.Request) {
 		w.Write([]byte("hello-world"))
-	default:
-		http.NotFound(w, r)
-	}
+	})
+	router.Route("/events", func(subRouter chi.Router) {
+		subRouter.Get("/", s.ListEvents)
+		subRouter.Post("/", s.CreateEvent)
+		subRouter.Patch("/", s.UpdateEvent)
+	})
+
+	router.ServeHTTP(w, r)
 }

@@ -71,22 +71,6 @@ func retMain() int {
 	// Запускаем приложение
 	calendar := app.New(logg, storage)
 
-	//{
-	//	lsn, err := net.Listen("tcp", ":50051")
-	//	if err != nil {
-	//		logg.Error("failed to start rpc listener: " + err.Error())
-	//		return 1
-	//	}
-	//
-	//	webServer := grpc.NewServer()
-	//	pb.RegisterEventsServer(webServer, pb.UnimplementedEventsServer{})
-	//	err = webServer.Serve(lsn)
-	//	if err != nil {
-	//		logg.Error("failed to serve rpc: " + err.Error())
-	//		return 1
-	//	}
-	//}
-
 	webServer := internalhttp.NewServer(logg, calendar)
 	grpcServer := internalgrpc.NewServer(logg, calendar)
 
