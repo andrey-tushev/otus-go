@@ -14,3 +14,7 @@ dsn = "postgres://calendar:calendar@localhost/calendar"
 [web]
 host = "127.0.0.1"
 port = "8080"
+
+[grpc]
+host = "127.0.0.1"
+port = "50051"

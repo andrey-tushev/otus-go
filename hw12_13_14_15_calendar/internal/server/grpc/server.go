@@ -37,9 +37,9 @@ func NewServer(logger Logger, app Application) *Server {
 	}
 }
 
-func (s *Server) Start(ctx context.Context) error {
+func (s *Server) Start(ctx context.Context, port string) error {
 
-	lsn, err := net.Listen("tcp", ":50051")
+	lsn, err := net.Listen("tcp", ":"+port)
 	if err != nil {
 		return errors.New("failed to start grpc listener: " + err.Error())
 	}

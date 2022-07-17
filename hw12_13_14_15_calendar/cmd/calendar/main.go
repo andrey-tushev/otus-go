@@ -124,7 +124,7 @@ func retMain() int {
 	wg.Add(1)
 	go func() {
 		defer wg.Done()
-		if err := grpcServer.Start(ctx); err != nil {
+		if err := grpcServer.Start(ctx, config.GRPC.Port); err != nil {
 			logg.Error("failed to start grpc-server: " + err.Error())
 			cancel()
 		}
