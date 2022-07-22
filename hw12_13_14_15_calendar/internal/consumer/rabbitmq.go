@@ -8,44 +8,31 @@ import (
 	"github.com/streadway/amqp"
 
 	"github.com/andrey-tushev/otus-go/hw12_13_14_15_calendar/internal/logger"
+
+	conf "github.com/andrey-tushev/otus-go/hw12_13_14_15_calendar/internal/config/sender"
 )
 
-type RMQConnection interface {
-	Channel() (*amqp.Channel, error)
-}
-
-type Consumer struct {
-	name string
-	conn RMQConnection
-	logg *logger.Logger
-}
-
-func New(name string, conn RMQConnection, logg *logger.Logger) *Consumer {
-	return &Consumer{
-		name: name,
-		conn: conn,
-		logg: logg,
+func GetMessagesFromRMQ(ctx context.Context, config conf.RabbitMQConf, logg *logger.Logger) (<-chan Message, error) {
+	conn, err := amqp.Dial(config.URI)
+	if err != nil {
+		logg.Error("rabbitmq dial error: " + err.Error())
+		return nil, err
 	}
-}
 
-type Message struct {
-	Data []byte
-}
-
-func (c *Consumer) Consume(ctx context.Context, queue string) (<-chan Message, error) {
-	ch, err := c.conn.Channel()
+	channel, err := conn.Channel()
 	if err != nil {
 		return nil, fmt.Errorf("open channel: %w", err)
 	}
 
 	go func() {
 		<-ctx.Done()
-		if err := ch.Close(); err != nil {
+		if err := channel.Close(); err != nil {
 			log.Println(err)
 		}
 	}()
 
-	deliveries, err := ch.Consume(queue, c.name, false, false, false, false, nil)
+	deliveries, err := channel.Consume(config.Queue, config.Consumer,
+		false, false, false, false, nil)
 	if err != nil {
 		return nil, fmt.Errorf("start consuming: %w", err)
 	}
@@ -55,7 +42,7 @@ func (c *Consumer) Consume(ctx context.Context, queue string) (<-chan Message, e
 	go func() {
 		defer func() {
 			close(messages)
-			c.logg.Info("close messages channel")
+			logg.Info("close messages channel")
 		}()
 
 		for {
@@ -64,7 +51,7 @@ func (c *Consumer) Consume(ctx context.Context, queue string) (<-chan Message, e
 				return
 			case delivery := <-deliveries:
 				if err := delivery.Ack(false); err != nil {
-					c.logg.Error("acknowledge error: " + err.Error())
+					logg.Error("acknowledge error: " + err.Error())
 				}
 
 				message := Message{

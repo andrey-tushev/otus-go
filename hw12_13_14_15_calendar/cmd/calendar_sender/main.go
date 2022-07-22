@@ -8,8 +8,7 @@ import (
 	"os/signal"
 	"syscall"
 
-	"github.com/streadway/amqp"
-
+	conf "github.com/andrey-tushev/otus-go/hw12_13_14_15_calendar/internal/config/sender"
 	"github.com/andrey-tushev/otus-go/hw12_13_14_15_calendar/internal/consumer"
 	"github.com/andrey-tushev/otus-go/hw12_13_14_15_calendar/internal/logger"
 )
@@ -28,7 +27,7 @@ func main() {
 func retMain() int {
 	flag.Parse()
 
-	config := NewConfig()
+	config := conf.New()
 	if err := config.Parse(configFile); err != nil {
 		fmt.Println(err)
 		return 1
@@ -39,7 +38,7 @@ func retMain() int {
 	ctx, cancel := signal.NotifyContext(context.Background(), syscall.SIGINT, syscall.SIGTERM)
 	defer cancel()
 
-	messages, err := getMessages(ctx, config, logg)
+	messages, err := consumer.GetMessagesFromRMQ(ctx, config.RabbitMQ, logg)
 	if err != nil {
 		logg.Error("message chan error: " + err.Error())
 		return 1
@@ -52,22 +51,4 @@ func retMain() int {
 	logg.Info("finish consuming")
 
 	return 0
-}
-
-// getMessages возвращает канал сообщениями
-func getMessages(ctx context.Context, config *Config, logg *logger.Logger) (<-chan consumer.Message, error) {
-	conn, err := amqp.Dial(config.RabbitMQ.URI)
-	if err != nil {
-		logg.Error("rabbitmq dial error: " + err.Error())
-		return nil, err
-	}
-
-	consumer := consumer.New(config.RabbitMQ.Consumer, conn, logg)
-	messages, err := consumer.Consume(ctx, config.RabbitMQ.Queue)
-	if err != nil {
-		logg.Error("rabbitmq dial error: " + err.Error())
-		return nil, err
-	}
-
-	return messages, nil
 }

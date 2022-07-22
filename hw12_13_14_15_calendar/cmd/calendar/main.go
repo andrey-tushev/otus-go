@@ -11,6 +11,7 @@ import (
 	"time"
 
 	"github.com/andrey-tushev/otus-go/hw12_13_14_15_calendar/internal/app"
+	conf "github.com/andrey-tushev/otus-go/hw12_13_14_15_calendar/internal/config/calendar"
 	"github.com/andrey-tushev/otus-go/hw12_13_14_15_calendar/internal/logger"
 	internalgrpc "github.com/andrey-tushev/otus-go/hw12_13_14_15_calendar/internal/server/grpc"
 	internalhttp "github.com/andrey-tushev/otus-go/hw12_13_14_15_calendar/internal/server/http"
@@ -40,7 +41,7 @@ func retMain() int {
 	}
 
 	// Загружаем конфигурацию
-	config := NewConfig()
+	config := conf.New()
 	if err := config.Parse(configFile); err != nil {
 		fmt.Println(err)
 		return 1

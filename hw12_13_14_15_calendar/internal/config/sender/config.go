@@ -1,4 +1,4 @@
-package main
+package sender
 
 import (
 	"fmt"
@@ -8,20 +8,20 @@ import (
 
 type Config struct {
 	Logger   LoggerConf
-	RabbitMQ RabbitMQ
+	RabbitMQ RabbitMQConf
 }
 
 type LoggerConf struct {
 	Level string
 }
 
-type RabbitMQ struct {
+type RabbitMQConf struct {
 	URI      string
 	Queue    string
 	Consumer string
 }
 
-func NewConfig() *Config {
+func New() *Config {
 	return &Config{}
 }
 
