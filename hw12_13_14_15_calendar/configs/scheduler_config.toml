@@ -1,0 +1,12 @@
+[logger]
+level = "info"
+
+[storage]
+storage = "sql"
+
+[sql]
+dsn = "postgres://calendar:calendar@localhost/calendar"
+
+[web]
+host = "127.0.0.1"
+port = "8080"

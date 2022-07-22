@@ -15,8 +15,7 @@ import (
 	"github.com/andrey-tushev/otus-go/hw12_13_14_15_calendar/internal/logger"
 	internalgrpc "github.com/andrey-tushev/otus-go/hw12_13_14_15_calendar/internal/server/grpc"
 	internalhttp "github.com/andrey-tushev/otus-go/hw12_13_14_15_calendar/internal/server/http"
-	memorystorage "github.com/andrey-tushev/otus-go/hw12_13_14_15_calendar/internal/storage/memory"
-	sqlstorage "github.com/andrey-tushev/otus-go/hw12_13_14_15_calendar/internal/storage/sql"
+	"github.com/andrey-tushev/otus-go/hw12_13_14_15_calendar/internal/storage/factory"
 )
 
 var configFile string
@@ -37,7 +36,7 @@ func retMain() int {
 
 	if flag.Arg(0) == "version" {
 		printVersion()
-		return 1
+		return 0
 	}
 
 	// Загружаем конфигурацию
@@ -51,21 +50,9 @@ func retMain() int {
 	logg := logger.New(config.Logger.Level)
 
 	// Выбираем и настраиваем хранилище
-	var storage app.Storage
-	switch config.Storage.Storage {
-	case "memory":
-		storage = memorystorage.New()
-	case "sql":
-		sqlStorage := sqlstorage.New(config.SQL.DSN)
-		err := sqlStorage.Connect(context.Background())
-		if err != nil {
-			fmt.Println(err)
-			return 1
-		}
-		defer sqlStorage.Close(context.Background())
-		storage = sqlStorage
-	default:
-		fmt.Println("unknown storage")
+	storage, err := factory.GetStorage(config)
+	if err != nil {
+		logg.Error(err.Error())
 		return 1
 	}
 

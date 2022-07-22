@@ -9,8 +9,8 @@ import (
 	"syscall"
 
 	conf "github.com/andrey-tushev/otus-go/hw12_13_14_15_calendar/internal/config/sender"
-	"github.com/andrey-tushev/otus-go/hw12_13_14_15_calendar/internal/consumer"
 	"github.com/andrey-tushev/otus-go/hw12_13_14_15_calendar/internal/logger"
+	"github.com/andrey-tushev/otus-go/hw12_13_14_15_calendar/internal/queue/rabbitmq"
 )
 
 var configFile string
@@ -38,7 +38,7 @@ func retMain() int {
 	ctx, cancel := signal.NotifyContext(context.Background(), syscall.SIGINT, syscall.SIGTERM)
 	defer cancel()
 
-	messages, err := consumer.GetMessagesFromRMQ(ctx, config.RabbitMQ, logg)
+	messages, err := rabbitmq.GetMessages(ctx, config.RabbitMQ, logg)
 	if err != nil {
 		logg.Error("message chan error: " + err.Error())
 		return 1

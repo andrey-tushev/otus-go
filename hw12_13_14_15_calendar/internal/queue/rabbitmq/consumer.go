@@ -1,5 +1,6 @@
-package consumer
+package rabbitmq
 
+// nolint:gci
 import (
 	"context"
 	"fmt"
@@ -7,12 +8,12 @@ import (
 
 	"github.com/streadway/amqp"
 
-	"github.com/andrey-tushev/otus-go/hw12_13_14_15_calendar/internal/logger"
-
 	conf "github.com/andrey-tushev/otus-go/hw12_13_14_15_calendar/internal/config/sender"
+	"github.com/andrey-tushev/otus-go/hw12_13_14_15_calendar/internal/logger"
+	"github.com/andrey-tushev/otus-go/hw12_13_14_15_calendar/internal/queue"
 )
 
-func GetMessagesFromRMQ(ctx context.Context, config conf.RabbitMQConf, logg *logger.Logger) (<-chan Message, error) {
+func GetMessages(ctx context.Context, config conf.RabbitMQConf, logg *logger.Logger) (<-chan queue.Message, error) {
 	conn, err := amqp.Dial(config.URI)
 	if err != nil {
 		logg.Error("rabbitmq dial error: " + err.Error())
@@ -37,7 +38,7 @@ func GetMessagesFromRMQ(ctx context.Context, config conf.RabbitMQConf, logg *log
 		return nil, fmt.Errorf("start consuming: %w", err)
 	}
 
-	messages := make(chan Message)
+	messages := make(chan queue.Message)
 
 	go func() {
 		defer func() {
@@ -54,7 +55,7 @@ func GetMessagesFromRMQ(ctx context.Context, config conf.RabbitMQConf, logg *log
 					logg.Error("acknowledge error: " + err.Error())
 				}
 
-				message := Message{
+				message := queue.Message{
 					Data: delivery.Body,
 				}
 

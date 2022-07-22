@@ -1,4 +1,4 @@
-package calendar
+package scheduler
 
 import (
 	"fmt"
@@ -30,8 +30,8 @@ type WebConf struct {
 	Port string
 }
 
-func New() Config {
-	return Config{}
+func New() *Config {
+	return &Config{}
 }
 
 func (c *Config) Parse(path string) error {
