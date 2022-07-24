@@ -10,12 +10,13 @@ import (
 )
 
 type Config struct {
-	Logger   LoggerConf
-	Storage  StorageConf
-	SQL      SQLConf
-	Web      WebConf
-	GRPC     GRPCConf
-	RabbitMQ RabbitMQConf
+	Logger    LoggerConf
+	Storage   StorageConf
+	SQL       SQLConf
+	Web       WebConf
+	GRPC      GRPCConf
+	RabbitMQ  RabbitMQConf
+	Scheduler Scheduler
 }
 
 type LoggerConf struct {
@@ -43,6 +44,11 @@ type RabbitMQConf struct {
 	URI      string
 	Queue    string
 	Consumer string
+}
+
+type Scheduler struct {
+	CleanInterval  string `toml:"clean_interval"`
+	RemindInterval string `toml:"remind_interval"`
 }
 
 func New() Config {

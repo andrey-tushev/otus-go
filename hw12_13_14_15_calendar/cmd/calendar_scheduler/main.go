@@ -6,7 +6,9 @@ import (
 	"fmt"
 	"os"
 	"os/signal"
+	"sync"
 	"syscall"
+	"time"
 
 	"github.com/andrey-tushev/otus-go/hw12_13_14_15_calendar/internal/app"
 	conf "github.com/andrey-tushev/otus-go/hw12_13_14_15_calendar/internal/config"
@@ -55,9 +57,59 @@ func retMain() int {
 	list, _ := calendar.ListEvents(context.Background())
 	fmt.Println(list)
 
-	_ = calendar
+	// Подготовим тикеры
+	cleanInterval, _ := time.ParseDuration(config.Scheduler.CleanInterval)
+	if cleanInterval <= 0 {
+		logg.Error("bad clean interval")
+		return 1
+	}
+	cleanTicker := time.NewTicker(cleanInterval)
 
-	logg.Info("started")
+	remindInterval, _ := time.ParseDuration(config.Scheduler.RemindInterval)
+	if remindInterval <= 0 {
+		logg.Error("bad remind interval")
+		return 1
+	}
+	remindTicker := time.NewTicker(remindInterval)
+
+	wg := sync.WaitGroup{}
+
+	// Очистка старых событий
+	wg.Add(1)
+	go func() {
+		calendar.Clean(context.Background())
+
+		for {
+			select {
+			case <-cleanTicker.C:
+				calendar.Clean(context.Background())
+
+			case <-ctx.Done():
+				wg.Done()
+				return
+			}
+		}
+	}()
+
+	// Напоминалки
+	wg.Add(1)
+	go func() {
+		calendar.Remind(context.Background())
+
+		for {
+			select {
+			case <-remindTicker.C:
+				calendar.Remind(context.Background())
+
+			case <-ctx.Done():
+				wg.Done()
+				return
+			}
+		}
+	}()
+
+	wg.Wait()
+	logg.Info("finished")
 
 	return 0
 }

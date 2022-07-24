@@ -83,6 +83,14 @@ func (a *App) checkAccessibility(ctx context.Context, event Event) error {
 	return nil
 }
 
+func (a *App) Clean(ctx context.Context) {
+	a.logger.Info("Cleanup")
+}
+
+func (a *App) Remind(ctx context.Context) {
+	a.logger.Info("Remind")
+}
+
 func (a *App) Close(ctx context.Context) {
 	a.storage.Close(ctx)
 }
