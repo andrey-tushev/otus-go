@@ -23,6 +23,7 @@ type Storage interface {
 	UpdateEvent(ctx context.Context, event storage.Event) error
 	DeleteEvent(ctx context.Context, id string) error
 	ListEvents(ctx context.Context) ([]storage.Event, error)
+	Close(ctx context.Context) error
 }
 
 func New(logger Logger, storage Storage) *App {
@@ -80,4 +81,8 @@ func (a *App) checkAccessibility(ctx context.Context, event Event) error {
 	}
 
 	return nil
+}
+
+func (a *App) Close(ctx context.Context) {
+	a.storage.Close(ctx)
 }

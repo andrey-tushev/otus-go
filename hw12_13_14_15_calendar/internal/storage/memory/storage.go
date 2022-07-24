@@ -68,3 +68,7 @@ func (s Storage) ListEvents(ctx context.Context) ([]storage.Event, error) {
 
 	return list, nil
 }
+
+func (s Storage) Close(ctx context.Context) error {
+	return nil
+}

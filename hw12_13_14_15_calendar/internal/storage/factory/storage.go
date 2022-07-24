@@ -5,7 +5,7 @@ import (
 	"errors"
 
 	"github.com/andrey-tushev/otus-go/hw12_13_14_15_calendar/internal/app"
-	conf "github.com/andrey-tushev/otus-go/hw12_13_14_15_calendar/internal/config/calendar"
+	conf "github.com/andrey-tushev/otus-go/hw12_13_14_15_calendar/internal/config"
 	memorystorage "github.com/andrey-tushev/otus-go/hw12_13_14_15_calendar/internal/storage/memory"
 	sqlstorage "github.com/andrey-tushev/otus-go/hw12_13_14_15_calendar/internal/storage/sql"
 )
@@ -21,7 +21,7 @@ func GetStorage(config conf.Config) (app.Storage, error) {
 		if err != nil {
 			return nil, err
 		}
-		defer sqlStorage.Close(context.Background())
+
 		return sqlStorage, nil
 	}
 

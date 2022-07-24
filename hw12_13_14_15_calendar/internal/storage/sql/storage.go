@@ -38,9 +38,7 @@ func (s *Storage) Exec(ctx context.Context, query string) error {
 }
 
 func (s *Storage) Close(ctx context.Context) error {
-	s.db.Close()
-
-	return nil
+	return s.db.Close()
 }
 
 func (s *Storage) CreateEvent(ctx context.Context, event storage.Event) (string, error) {

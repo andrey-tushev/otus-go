@@ -9,7 +9,7 @@ import (
 	"syscall"
 
 	"github.com/andrey-tushev/otus-go/hw12_13_14_15_calendar/internal/app"
-	conf "github.com/andrey-tushev/otus-go/hw12_13_14_15_calendar/internal/config/calendar"
+	conf "github.com/andrey-tushev/otus-go/hw12_13_14_15_calendar/internal/config"
 	"github.com/andrey-tushev/otus-go/hw12_13_14_15_calendar/internal/logger"
 	"github.com/andrey-tushev/otus-go/hw12_13_14_15_calendar/internal/storage/factory"
 )
@@ -47,9 +47,13 @@ func retMain() int {
 		logg.Error(err.Error())
 		return 1
 	}
+	defer storage.Close(context.Background())
 
 	// Запускаем приложение
 	calendar := app.New(logg, storage)
+
+	list, _ := calendar.ListEvents(context.Background())
+	fmt.Println(list)
 
 	_ = calendar
 

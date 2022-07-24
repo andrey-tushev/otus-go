@@ -7,7 +7,6 @@ level = "info"
 #storage = "memory"
 storage = "sql"
 
-
 [sql]
 dsn = "postgres://calendar:calendar@localhost/calendar"
 

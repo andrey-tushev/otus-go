@@ -10,3 +10,8 @@ dsn = "postgres://calendar:calendar@localhost/calendar"
 [web]
 host = "127.0.0.1"
 port = "8080"
+
+[rabbitmq]
+uri = "amqp://guest:guest@localhost:5672/"
+queue = "reminders"
+consumer = "remind-consumer"

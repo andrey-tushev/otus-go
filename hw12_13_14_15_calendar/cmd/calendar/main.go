@@ -11,7 +11,7 @@ import (
 	"time"
 
 	"github.com/andrey-tushev/otus-go/hw12_13_14_15_calendar/internal/app"
-	conf "github.com/andrey-tushev/otus-go/hw12_13_14_15_calendar/internal/config/calendar"
+	conf "github.com/andrey-tushev/otus-go/hw12_13_14_15_calendar/internal/config"
 	"github.com/andrey-tushev/otus-go/hw12_13_14_15_calendar/internal/logger"
 	internalgrpc "github.com/andrey-tushev/otus-go/hw12_13_14_15_calendar/internal/server/grpc"
 	internalhttp "github.com/andrey-tushev/otus-go/hw12_13_14_15_calendar/internal/server/http"

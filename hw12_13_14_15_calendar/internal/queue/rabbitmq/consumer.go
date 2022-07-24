@@ -8,7 +8,7 @@ import (
 
 	"github.com/streadway/amqp"
 
-	conf "github.com/andrey-tushev/otus-go/hw12_13_14_15_calendar/internal/config/sender"
+	conf "github.com/andrey-tushev/otus-go/hw12_13_14_15_calendar/internal/config"
 	"github.com/andrey-tushev/otus-go/hw12_13_14_15_calendar/internal/logger"
 	"github.com/andrey-tushev/otus-go/hw12_13_14_15_calendar/internal/queue"
 )
