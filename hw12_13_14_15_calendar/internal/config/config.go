@@ -44,6 +44,7 @@ type RabbitMQConf struct {
 	URI      string
 	Queue    string
 	Consumer string
+	Exchange string
 }
 
 type Scheduler struct {

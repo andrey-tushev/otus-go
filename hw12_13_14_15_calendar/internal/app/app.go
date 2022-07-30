@@ -3,6 +3,8 @@ package app
 import (
 	"context"
 
+	"github.com/andrey-tushev/otus-go/hw12_13_14_15_calendar/internal/queue"
+	"github.com/andrey-tushev/otus-go/hw12_13_14_15_calendar/internal/queue/rabbitmq"
 	"github.com/andrey-tushev/otus-go/hw12_13_14_15_calendar/internal/storage"
 )
 
@@ -87,8 +89,20 @@ func (a *App) Clean(ctx context.Context) {
 	a.logger.Info("Cleanup")
 }
 
-func (a *App) Remind(ctx context.Context) {
+func (a *App) Remind(ctx context.Context, producer *rabbitmq.Producer) {
 	a.logger.Info("Remind")
+
+	events, err := a.ListEvents(ctx)
+	if err != nil {
+		a.logger.Error(err.Error())
+		return
+	}
+	for _, event := range events {
+		message := queue.Message{
+			Data: []byte(event.Title),
+		}
+		producer.Publish(message)
+	}
 }
 
 func (a *App) Close(ctx context.Context) {

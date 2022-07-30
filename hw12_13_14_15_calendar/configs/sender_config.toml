@@ -3,5 +3,5 @@ level = "info"
 
 [rabbitmq]
 uri = "amqp://guest:guest@localhost:5672/"
-queue = "reminders"
+queue = "remind-qu"
 consumer = "remind-consumer"
