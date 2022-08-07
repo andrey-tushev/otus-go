@@ -27,7 +27,6 @@ func (s *Server) loggingMiddleware(next http.Handler) http.Handler {
 }
 
 // Кастомный ResponseWriter, который позволяет вытащить http код.
-// ASK: Можно ли решить это как то менее костыльно?
 type LoggingResponseWriter struct {
 	http.ResponseWriter
 	StatusCode int

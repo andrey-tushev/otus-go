@@ -6,6 +6,8 @@ LDFLAGS := -X main.release="develop" -X main.buildDate=$(shell date -u +%Y-%m-%d
 
 build:
 	go build -v -o $(BIN) -ldflags "$(LDFLAGS)" ./cmd/calendar
+	go build -v -o $(BIN)_scheduler -ldflags "$(LDFLAGS)" ./cmd/calendar_scheduler
+	go build -v -o $(BIN)_sender -ldflags "$(LDFLAGS)" ./cmd/calendar_sender
 
 run: build
 	$(BIN) -config ./configs/config.toml
@@ -23,8 +25,6 @@ version: build
 	$(BIN) version
 
 test:
-# ASK: А как мне тут тестить internal/storage/sql, он требует живой Postgres
-# go test -race ./internal/... ./pkg/...
 	go test -race ./internal/storage/memory/... ./internal/app/...
 
 install-lint-deps:
@@ -32,5 +32,8 @@ install-lint-deps:
 
 lint: install-lint-deps
 	golangci-lint run ./...
+
+generate:
+	protoc --go_out=. --go-grpc_out=. api/EventService.proto
 
 .PHONY: build run build-img run-img version test lint

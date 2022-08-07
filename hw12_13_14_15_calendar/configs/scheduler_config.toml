@@ -1,0 +1,22 @@
+[logger]
+level = "info"
+
+[storage]
+storage = "sql"
+
+[sql]
+dsn = "postgres://calendar:calendar@localhost/calendar"
+
+[web]
+host = "127.0.0.1"
+port = "8080"
+
+[rabbitmq]
+uri = "amqp://guest:guest@localhost:5672/"
+queue = "remind-qu"
+consumer = "remind-consumer"
+exchange = "remind-ex"
+
+[scheduler]
+clean_interval = "10s"
+remind_interval = "12s"
