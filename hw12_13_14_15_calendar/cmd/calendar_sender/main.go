@@ -46,7 +46,7 @@ func retMain() int {
 
 	logg.Info("start consuming")
 	for message := range messages {
-		logg.Info("mock remind: " + string(message.String()))
+		logg.Info("mock remind: " + message.String())
 	}
 	logg.Info("finish consuming")
 

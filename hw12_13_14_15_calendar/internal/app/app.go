@@ -99,7 +99,7 @@ func (a *App) Clean(ctx context.Context) {
 		return
 	}
 	for _, event := range events {
-		since := time.Now().Sub(event.DateTime)
+		since := time.Since(event.DateTime)
 		if since > cleanAge {
 			a.logger.Info(fmt.Sprintf("Cleaning: %s, %s", event.DateTime, event.Title))
 

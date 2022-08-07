@@ -1,5 +1,6 @@
 package rabbitmq
 
+//nolint:gci
 import (
 	"context"
 	"fmt"
