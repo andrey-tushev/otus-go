@@ -101,12 +101,12 @@ func retMain() int {
 	// Напоминалки
 	wg.Add(1)
 	go func() {
-		calendar.Remind(context.Background(), producer)
+		calendar.Remind(context.Background(), producer, remindInterval)
 
 		for {
 			select {
 			case <-remindTicker.C:
-				calendar.Remind(context.Background(), producer)
+				calendar.Remind(context.Background(), producer, remindInterval)
 
 			case <-ctx.Done():
 				wg.Done()

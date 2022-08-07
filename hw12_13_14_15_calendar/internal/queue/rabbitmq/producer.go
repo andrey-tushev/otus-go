@@ -8,7 +8,7 @@ import (
 
 	conf "github.com/andrey-tushev/otus-go/hw12_13_14_15_calendar/internal/config"
 	"github.com/andrey-tushev/otus-go/hw12_13_14_15_calendar/internal/logger"
-	"github.com/andrey-tushev/otus-go/hw12_13_14_15_calendar/internal/queue"
+	"github.com/andrey-tushev/otus-go/hw12_13_14_15_calendar/internal/queue/message"
 )
 
 type Producer struct {
@@ -46,7 +46,9 @@ func New(ctx context.Context, config conf.Config, logg *logger.Logger) (*Produce
 	}, nil
 }
 
-func (p *Producer) Publish(message queue.Message) error {
+func (p *Producer) Publish(message message.Message) error {
+	encodedMessage, _ := message.Encode()
+
 	err := p.channel.Publish(
 		p.exchange,
 		"",
@@ -56,7 +58,7 @@ func (p *Producer) Publish(message queue.Message) error {
 			Headers:         amqp.Table{"a-header": "a-value"},
 			ContentType:     "text/plain",
 			ContentEncoding: "",
-			Body:            message.Data,
+			Body:            encodedMessage,
 			DeliveryMode:    amqp.Persistent,
 			Priority:        0,
 		},

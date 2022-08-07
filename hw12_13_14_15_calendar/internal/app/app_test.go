@@ -52,3 +52,14 @@ func TestCheckAccessibility(t *testing.T) {
 	})
 	require.Error(t, err)
 }
+
+func TestNeedRemind(t *testing.T) {
+	eventTime := time.Now().Add(30 * time.Minute)
+	require.True(t, needRemind(eventTime, 1*time.Hour))
+
+	eventTime = time.Now().Add(65 * time.Minute)
+	require.False(t, needRemind(eventTime, 1*time.Hour))
+
+	eventTime = time.Now().Add(-5 * time.Minute)
+	require.False(t, needRemind(eventTime, 1*time.Hour))
+}
