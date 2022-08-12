@@ -1,0 +1,13 @@
+version: '3'
+services:
+  image-server:
+    image: nginx:alpine
+    container_name: image-server
+    restart: unless-stopped
+    tty: true
+    ports:
+      - "8082:80"
+
+
+    volumes:
+      - ./images:/usr/share/nginx/html
