@@ -1,20 +1,28 @@
 package http
 
 import (
+	"bytes"
 	"context"
 	"errors"
 	"fmt"
+	"image/jpeg"
 	"io"
 	"net"
 	"net/http"
 	"regexp"
 	"strconv"
 	"time"
+
+	"github.com/disintegration/imaging"
+
+	"github.com/andrey-tushev/otus-go/previewer/internal/cache"
+	"github.com/andrey-tushev/otus-go/previewer/internal/image"
 )
 
 type Server struct {
 	logger     Logger
 	httpServer *http.Server
+	cache      cache.Cache
 }
 
 type Logger interface {
@@ -25,6 +33,7 @@ type Logger interface {
 func New(logger Logger) *Server {
 	return &Server{
 		logger: logger,
+		cache:  cache.New(),
 	}
 }
 
@@ -62,6 +71,17 @@ func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	cachedContent := s.cache.Get(img)
+	if cachedContent != nil {
+		s.logger.Info("taken from cache")
+
+		w.Header().Set("Content-Length", strconv.Itoa(len(cachedContent)))
+		w.Header().Set("X-Proxy", "proxy-resizer")
+
+		io.Copy(w, bytes.NewReader(cachedContent))
+		return
+	}
+
 	tr := &http.Transport{
 		MaxIdleConns:       10,
 		IdleConnTimeout:    30 * time.Second,
@@ -82,16 +102,21 @@ func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	for name, _ := range resp.Header {
 		w.Header().Set(name, resp.Header.Get(name))
 	}
-	w.Header().Set("X-Proxy", "proxy-resizer")
+
+	targetImage, err := imaging.Decode(resp.Body)
+
+	resizedImage := imaging.Fit(targetImage, img.Width, img.Height, imaging.Lanczos)
+
+	buf := bytes.Buffer{}
+	jpeg.Encode(&buf, resizedImage, nil)
+
 	w.WriteHeader(resp.StatusCode)
+	w.Header().Set("Content-Length", strconv.Itoa(buf.Len()))
+	w.Header().Set("X-Proxy", "proxy-resizer")
 
-	io.Copy(w, resp.Body)
-}
+	io.Copy(w, bytes.NewReader(buf.Bytes()))
 
-type PreviewImage struct {
-	Path   string
-	Width  int
-	Height int
+	s.cache.Set(img, buf.Bytes())
 }
 
 var ErrBadImageRequestURL = errors.New("bad image request url")
@@ -103,23 +128,23 @@ const (
 
 var urlRexExp = regexp.MustCompile(`^\/fill\/(\d+)\/(\d+)/((?:[\/a-z\d\-\._])+\.jpe?g)$`)
 
-func parse(uri string) (PreviewImage, error) {
+func parse(uri string) (image.PreviewImage, error) {
 	parts := urlRexExp.FindStringSubmatch(uri)
 	if len(parts) != 3+1 {
-		return PreviewImage{}, ErrBadImageRequestURL
+		return image.PreviewImage{}, ErrBadImageRequestURL
 	}
 
 	w, _ := strconv.Atoi(parts[1])
 	if w < 1 || w > MaxWidth {
-		return PreviewImage{}, ErrBadImageRequestURL
+		return image.PreviewImage{}, ErrBadImageRequestURL
 	}
 
 	h, _ := strconv.Atoi(parts[2])
 	if h < 1 || h > MaxHeight {
-		return PreviewImage{}, ErrBadImageRequestURL
+		return image.PreviewImage{}, ErrBadImageRequestURL
 	}
 
-	return PreviewImage{
+	return image.PreviewImage{
 		Path:   parts[3],
 		Width:  w,
 		Height: h,
