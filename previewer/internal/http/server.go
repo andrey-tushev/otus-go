@@ -63,7 +63,7 @@ func (s *Server) Stop(ctx context.Context) error {
 }
 
 func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	// Получам параметры требуемой превьюшки
+	// Получаем параметры требуемой превьюшки
 	requestedPreview, err := preview.NewFromURL(r.RequestURI)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusBadGateway)
@@ -71,11 +71,12 @@ func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Попробуем найти в кэше и вернуть из кэша
-	cachedContent := s.cache.Get(requestedPreview)
-	if cachedContent != nil {
-		w.Header().Set("Content-Length", strconv.Itoa(len(cachedContent)))
+	cached := s.cache.Get(requestedPreview)
+	if cached != nil {
+		w.Header().Set("Content-Length", strconv.Itoa(cached.Len()))
 		w.Header().Set("X-Proxy", "proxy-resizer")
-		io.Copy(w, bytes.NewReader(cachedContent))
+		w.Header().Set("X-Cached", "yes")
+		io.Copy(w, bytes.NewReader(cached.Body))
 
 		s.logger.Info("taken from cache")
 		return
@@ -99,26 +100,32 @@ func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Копируем заголовки
-	for name, _ := range targetResp.Header {
-		w.Header().Set(name, targetResp.Header.Get(name))
-	}
+	container := preview.NewContainer()
 
 	// Ресайзим
-	resizedContent, err := resize(targetResp.Body, requestedPreview.Width, requestedPreview.Height)
+	container.Body, err = resize(targetResp.Body, requestedPreview.Width, requestedPreview.Height)
 	if err != nil {
 		s.logger.Error(err.Error())
 		http.Error(w, err.Error(), http.StatusBadGateway)
 		return
 	}
 
-	// Записываем уменьшенную картику в ответ и в кэш
-	w.WriteHeader(targetResp.StatusCode)
-	w.Header().Set("Content-Length", strconv.Itoa(len(resizedContent)))
-	w.Header().Set("X-Proxy", "proxy-resizer")
+	// Копируем заголовки целевого сервера и корректируем Content-Length
+	for name := range targetResp.Header {
+		container.SetHeader(name, targetResp.Header.Get(name))
+	}
+	container.SetHeader("Content-Length", strconv.Itoa(len(container.Body)))
 
-	io.Copy(w, bytes.NewReader(resizedContent))
-	s.cache.Set(requestedPreview, resizedContent)
+	// Записываем уменьшенную картику в ответ и в кэш
+	for name, value := range container.Headers {
+		w.Header().Set(name, value)
+	}
+	w.Header().Set("X-Proxy", "proxy-resizer")
+	w.Header().Set("X-Cached", "no")
+	w.WriteHeader(targetResp.StatusCode)
+	io.Copy(w, bytes.NewReader(container.Body))
+
+	s.cache.Set(requestedPreview, container)
 }
 
 func resize(content io.ReadCloser, width, height int) ([]byte, error) {

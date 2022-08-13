@@ -16,17 +16,20 @@ func New() Cache {
 	}
 }
 
-func (c *Cache) Get(img preview.Image) []byte {
+func (c *Cache) Get(img preview.Image) *preview.Container {
 	content, err := os.ReadFile(c.dir + "/" + img.Key())
 	if err != nil {
 		return nil
 	}
 
-	return content
+	container := preview.NewContainer()
+	container.Body = content
+
+	return container
 }
 
-func (c *Cache) Set(img preview.Image, content []byte) {
+func (c *Cache) Set(img preview.Image, container *preview.Container) {
 	f, _ := os.Create(c.dir + "/" + img.Key())
-	_, _ = f.Write(content)
+	_, _ = f.Write(container.Body)
 	f.Close()
 }
