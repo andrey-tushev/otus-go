@@ -19,7 +19,7 @@ var maxFiles int
 
 func init() {
 	flag.IntVar(&maxFiles, "max-files", 10, "Maximum files in cache")
-	flag.StringVar(&targetURL, "target-url", "http://localhost:8081/images/", "Target URL")
+	flag.StringVar(&targetURL, "target-url", "http://localhost:8082/", "Target URL")
 	flag.IntVar(&port, "port", 8081, "Server port")
 }
 
@@ -40,7 +40,7 @@ func retMain() int {
 	log.Info("Proxy started")
 	defer log.Info("Proxy finished")
 
-	proxyServer := http.New(log, "http://localhost:8082/")
+	proxyServer := http.New(log, targetURL)
 
 	// Останавливалка серверов по сигналу
 	ctx, cancel := signal.NotifyContext(context.Background(),

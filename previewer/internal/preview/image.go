@@ -50,5 +50,5 @@ func NewFromURL(uri string) (Image, error) {
 func (i Image) Key() string {
 	a := md5.Sum([]byte(i.Path))
 	h := hex.EncodeToString(a[0:len(a)])
-	return fmt.Sprintf("%dx%d-%s.jpg", i.Width, i.Height, h)
+	return fmt.Sprintf("%dx%d-%s", i.Width, i.Height, h)
 }

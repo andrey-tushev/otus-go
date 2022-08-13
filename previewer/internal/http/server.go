@@ -73,7 +73,9 @@ func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	// Попробуем найти в кэше и вернуть из кэша
 	cached := s.cache.Get(requestedPreview)
 	if cached != nil {
-		w.Header().Set("Content-Length", strconv.Itoa(cached.Len()))
+		for name, value := range cached.Headers {
+			w.Header().Set(name, value)
+		}
 		w.Header().Set("X-Proxy", "proxy-resizer")
 		w.Header().Set("X-Cached", "yes")
 		io.Copy(w, bytes.NewReader(cached.Body))
@@ -93,6 +95,11 @@ func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	s.logger.Info("target: " + targetUrl)
 	targetResp, err := client.Get(targetUrl)
 
+	// Целевой сервер не вернул нормальный ответ
+	if targetResp.StatusCode == 404 {
+		http.Error(w, http.StatusText(http.StatusNotFound), http.StatusNotFound)
+		return
+	}
 	if targetResp.StatusCode < 200 || targetResp.StatusCode > 299 {
 		text := fmt.Sprintf("bad target server response %d", targetResp.StatusCode)
 		s.logger.Error(text)
