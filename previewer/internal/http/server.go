@@ -3,26 +3,25 @@ package http
 import (
 	"bytes"
 	"context"
-	"errors"
 	"fmt"
 	"image/jpeg"
 	"io"
 	"net"
 	"net/http"
-	"regexp"
 	"strconv"
 	"time"
 
 	"github.com/disintegration/imaging"
 
 	"github.com/andrey-tushev/otus-go/previewer/internal/cache"
-	"github.com/andrey-tushev/otus-go/previewer/internal/image"
+	"github.com/andrey-tushev/otus-go/previewer/internal/preview"
 )
 
 type Server struct {
-	logger     Logger
-	httpServer *http.Server
-	cache      cache.Cache
+	logger       Logger
+	httpServer   *http.Server
+	cache        cache.Cache
+	targetPrefix string
 }
 
 type Logger interface {
@@ -30,10 +29,11 @@ type Logger interface {
 	Error(msg string)
 }
 
-func New(logger Logger) *Server {
+func New(logger Logger, targetPrefix string) *Server {
 	return &Server{
-		logger: logger,
-		cache:  cache.New(),
+		logger:       logger,
+		cache:        cache.New(),
+		targetPrefix: targetPrefix,
 	}
 }
 
@@ -63,90 +63,75 @@ func (s *Server) Stop(ctx context.Context) error {
 }
 
 func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	s.logger.Info(r.RequestURI)
-
-	img, err := parse(r.RequestURI)
+	// Получам параметры требуемой превьюшки
+	requestedPreview, err := preview.NewFromURL(r.RequestURI)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusBadGateway)
 		return
 	}
 
-	cachedContent := s.cache.Get(img)
+	// Попробуем найти в кэше и вернуть из кэша
+	cachedContent := s.cache.Get(requestedPreview)
 	if cachedContent != nil {
-		s.logger.Info("taken from cache")
-
 		w.Header().Set("Content-Length", strconv.Itoa(len(cachedContent)))
 		w.Header().Set("X-Proxy", "proxy-resizer")
-
 		io.Copy(w, bytes.NewReader(cachedContent))
+
+		s.logger.Info("taken from cache")
 		return
 	}
 
+	// Запросим оригинальную картинку из целевого сервера
 	tr := &http.Transport{
 		MaxIdleConns:       10,
 		IdleConnTimeout:    30 * time.Second,
 		DisableCompression: true,
 	}
 	client := &http.Client{Transport: tr}
-	targetUrl := "http://localhost:8082/" + img.Path
+	targetUrl := s.targetPrefix + requestedPreview.Path
 	s.logger.Info("target: " + targetUrl)
-	resp, err := client.Get(targetUrl)
+	targetResp, err := client.Get(targetUrl)
 
-	if resp.StatusCode < 200 || resp.StatusCode > 299 {
-		text := fmt.Sprintf("bad target server response %d", resp.StatusCode)
+	if targetResp.StatusCode < 200 || targetResp.StatusCode > 299 {
+		text := fmt.Sprintf("bad target server response %d", targetResp.StatusCode)
 		s.logger.Error(text)
 		http.Error(w, text, http.StatusBadGateway)
 		return
 	}
 
-	for name, _ := range resp.Header {
-		w.Header().Set(name, resp.Header.Get(name))
+	// Копируем заголовки
+	for name, _ := range targetResp.Header {
+		w.Header().Set(name, targetResp.Header.Get(name))
 	}
 
-	targetImage, err := imaging.Decode(resp.Body)
+	// Ресайзим
+	resizedContent, err := resize(targetResp.Body, requestedPreview.Width, requestedPreview.Height)
+	if err != nil {
+		s.logger.Error(err.Error())
+		http.Error(w, err.Error(), http.StatusBadGateway)
+		return
+	}
 
-	resizedImage := imaging.Fit(targetImage, img.Width, img.Height, imaging.Lanczos)
-
-	buf := bytes.Buffer{}
-	jpeg.Encode(&buf, resizedImage, nil)
-
-	w.WriteHeader(resp.StatusCode)
-	w.Header().Set("Content-Length", strconv.Itoa(buf.Len()))
+	// Записываем уменьшенную картику в ответ и в кэш
+	w.WriteHeader(targetResp.StatusCode)
+	w.Header().Set("Content-Length", strconv.Itoa(len(resizedContent)))
 	w.Header().Set("X-Proxy", "proxy-resizer")
 
-	io.Copy(w, bytes.NewReader(buf.Bytes()))
-
-	s.cache.Set(img, buf.Bytes())
+	io.Copy(w, bytes.NewReader(resizedContent))
+	s.cache.Set(requestedPreview, resizedContent)
 }
 
-var ErrBadImageRequestURL = errors.New("bad image request url")
-
-const (
-	MaxWidth  = 1024
-	MaxHeight = 1024
-)
-
-var urlRexExp = regexp.MustCompile(`^\/fill\/(\d+)\/(\d+)/((?:[\/a-z\d\-\._])+\.jpe?g)$`)
-
-func parse(uri string) (image.PreviewImage, error) {
-	parts := urlRexExp.FindStringSubmatch(uri)
-	if len(parts) != 3+1 {
-		return image.PreviewImage{}, ErrBadImageRequestURL
+func resize(content io.ReadCloser, width, height int) ([]byte, error) {
+	targetImage, err := imaging.Decode(content)
+	if err != nil {
+		return nil, err
+	}
+	resizedImage := imaging.Fit(targetImage, width, height, imaging.Lanczos)
+	buf := bytes.Buffer{}
+	err = jpeg.Encode(&buf, resizedImage, nil)
+	if err != nil {
+		return nil, err
 	}
 
-	w, _ := strconv.Atoi(parts[1])
-	if w < 1 || w > MaxWidth {
-		return image.PreviewImage{}, ErrBadImageRequestURL
-	}
-
-	h, _ := strconv.Atoi(parts[2])
-	if h < 1 || h > MaxHeight {
-		return image.PreviewImage{}, ErrBadImageRequestURL
-	}
-
-	return image.PreviewImage{
-		Path:   parts[3],
-		Width:  w,
-		Height: h,
-	}, nil
+	return buf.Bytes(), nil
 }

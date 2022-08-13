@@ -17,9 +17,6 @@ var targetURL string
 var port int
 var maxFiles int
 
-//http://cut-service.com/fill/300/200/ - endpoint нашего сервиса, в котором 300x200 - это размеры финального изображения.
-//https://raw.githubusercontent.com/OtusGolang/final_project/master/examples/image-previewer/_gopher_original_1024x504.jpg
-
 func init() {
 	flag.IntVar(&maxFiles, "max-files", 10, "Maximum files in cache")
 	flag.StringVar(&targetURL, "target-url", "http://localhost:8081/images/", "Target URL")
@@ -43,10 +40,7 @@ func retMain() int {
 	log.Info("Proxy started")
 	defer log.Info("Proxy finished")
 
-	//// Запускаем приложение
-	//calendar := app.New(logg, storage)
-	//
-	webServer := http.New(log)
+	proxyServer := http.New(log, "http://localhost:8082/")
 
 	// Останавливалка серверов по сигналу
 	ctx, cancel := signal.NotifyContext(context.Background(),
@@ -66,46 +60,16 @@ func retMain() int {
 		// Останавливаем web-сервер
 		go func() {
 			log.Info("terminating web-server")
-			if err := webServer.Stop(ctx); err != nil {
+			if err := proxyServer.Stop(ctx); err != nil {
 				log.Error("failed to stop web-server: " + err.Error())
 			}
 		}()
 	}()
 
-	if err := webServer.Start(ctx, "localhost", port); err != nil {
+	if err := proxyServer.Start(ctx, "localhost", port); err != nil {
 		log.Error("failed to start http-server: " + err.Error())
 		cancel()
 	}
-
-	//
-	//// Запускаем оба web и grpc сервер.
-	//// Программа завершиться когда завершатся оба сервера
-	//logg.Info("running web and grpc servers...")
-	//
-	//var wg sync.WaitGroup
-	//
-	//wg.Add(1)
-	//go func() {
-	//	defer wg.Done()
-	//	if err := webServer.Start(ctx, config.Web.Host, config.Web.Port); err != nil {
-	//		logg.Error("failed to start http-server: " + err.Error())
-	//		cancel()
-	//	}
-	//}()
-	//
-	//wg.Add(1)
-	//go func() {
-	//	defer wg.Done()
-	//	if err := grpcServer.Start(ctx, config.GRPC.Port); err != nil {
-	//		logg.Error("failed to start grpc-server: " + err.Error())
-	//		cancel()
-	//	}
-	//}()
-	//
-	//logg.Info("waiting for all servers finished")
-	//wg.Wait()
-	//logg.Info("all servers are finished")
-	//
 
 	return 0
 }
