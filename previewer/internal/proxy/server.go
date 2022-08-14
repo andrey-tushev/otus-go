@@ -1,8 +1,9 @@
-package http
+package proxy
 
 import (
 	"bytes"
 	"context"
+	"errors"
 	"fmt"
 	"image/jpeg"
 	"io"
@@ -29,10 +30,17 @@ type Logger interface {
 	Error(msg string)
 }
 
+const jpegContentType = "image/jpeg"
+
+var ErrBadContentType = errors.New("bad content type")
+
 func New(logger Logger, targetPrefix string) *Server {
+	cache := cache.New()
+	cache.Clear()
+
 	return &Server{
 		logger:       logger,
-		cache:        cache.New(),
+		cache:        cache,
 		targetPrefix: targetPrefix,
 	}
 }
@@ -95,7 +103,16 @@ func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	s.logger.Info("target: " + targetUrl)
 	targetResp, err := client.Get(targetUrl)
 
-	// Целевой сервер не вернул нормальный ответ
+	// Убедимся что целевой сервер вернул ожидаемый ответ
+	if targetResp.Header.Get("Content-Type") != jpegContentType {
+		http.Error(w, ErrBadContentType.Error(), http.StatusBadGateway)
+		return
+	}
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusBadGateway)
+		s.logger.Error(err.Error())
+		return
+	}
 	if targetResp.StatusCode == 404 {
 		http.Error(w, http.StatusText(http.StatusNotFound), http.StatusNotFound)
 		return

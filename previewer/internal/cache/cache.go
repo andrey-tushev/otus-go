@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"encoding/gob"
 	"os"
+	"path/filepath"
 	"sync"
 
 	"github.com/andrey-tushev/otus-go/previewer/internal/preview"
@@ -18,6 +19,20 @@ func New() Cache {
 	return Cache{
 		dir: "cache",
 	}
+}
+
+func (c *Cache) Clear() error {
+	c.mu.Lock()
+	defer c.mu.Unlock()
+
+	files, _ := filepath.Glob(c.dir + "/prvw-*.gob")
+	for _, f := range files {
+		err := os.Remove(f)
+		if err != nil {
+			return err
+		}
+	}
+	return nil
 }
 
 func (c *Cache) Get(img preview.Image) *preview.Container {
@@ -55,5 +70,5 @@ func (c *Cache) Set(img preview.Image, container *preview.Container) {
 }
 
 func (c *Cache) filename(img preview.Image) string {
-	return c.dir + "/" + img.Key() + ".gob"
+	return c.dir + "/prvw-" + img.Key() + ".gob"
 }

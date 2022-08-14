@@ -9,8 +9,8 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/andrey-tushev/otus-go/previewer/internal/http"
 	"github.com/andrey-tushev/otus-go/previewer/internal/logger"
+	"github.com/andrey-tushev/otus-go/previewer/internal/proxy"
 )
 
 var targetURL string
@@ -19,7 +19,7 @@ var maxFiles int
 
 func init() {
 	flag.IntVar(&maxFiles, "max-files", 10, "Maximum files in cache")
-	flag.StringVar(&targetURL, "target-url", "http://localhost:8082/", "Target URL")
+	flag.StringVar(&targetURL, "target-url", "http://localhost:8083/", "Target URL")
 	flag.IntVar(&port, "port", 8081, "Server port")
 }
 
@@ -40,7 +40,7 @@ func retMain() int {
 	log.Info("Proxy started")
 	defer log.Info("Proxy finished")
 
-	proxyServer := http.New(log, targetURL)
+	proxyServer := proxy.New(log, targetURL)
 
 	// Останавливалка серверов по сигналу
 	ctx, cancel := signal.NotifyContext(context.Background(),
