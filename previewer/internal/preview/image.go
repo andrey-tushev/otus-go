@@ -10,8 +10,8 @@ import (
 )
 
 const (
-	MaxWidth  = 1024
-	MaxHeight = 1024
+	MaxWidth  = 4096
+	MaxHeight = 4096
 )
 
 type Image struct {

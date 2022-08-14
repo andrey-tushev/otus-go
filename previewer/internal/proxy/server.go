@@ -14,14 +14,13 @@ import (
 
 	"github.com/disintegration/imaging"
 
-	"github.com/andrey-tushev/otus-go/previewer/internal/cache"
 	"github.com/andrey-tushev/otus-go/previewer/internal/preview"
 )
 
 type Server struct {
 	logger       Logger
 	httpServer   *http.Server
-	cache        cache.Cache
+	cache        Cache
 	targetPrefix string
 }
 
@@ -30,17 +29,20 @@ type Logger interface {
 	Error(msg string)
 }
 
+type Cache interface {
+	Get(img preview.Image) *preview.Container
+	Set(img preview.Image, container *preview.Container)
+}
+
 const jpegContentType = "image/jpeg"
 
 var ErrBadContentType = errors.New("bad content type")
+var ErrResizeError = errors.New("resize error")
 
-func New(logger Logger, targetPrefix string) *Server {
-	cache := cache.New()
-	cache.Clear()
-
+func New(logger Logger, previewCache Cache, targetPrefix string) *Server {
 	return &Server{
 		logger:       logger,
-		cache:        cache,
+		cache:        previewCache,
 		targetPrefix: targetPrefix,
 	}
 }
@@ -104,10 +106,6 @@ func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	targetResp, err := client.Get(targetUrl)
 
 	// Убедимся что целевой сервер вернул ожидаемый ответ
-	if targetResp.Header.Get("Content-Type") != jpegContentType {
-		http.Error(w, ErrBadContentType.Error(), http.StatusBadGateway)
-		return
-	}
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusBadGateway)
 		s.logger.Error(err.Error())
@@ -121,6 +119,10 @@ func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		text := fmt.Sprintf("bad target server response %d", targetResp.StatusCode)
 		s.logger.Error(text)
 		http.Error(w, text, http.StatusBadGateway)
+		return
+	}
+	if targetResp.Header.Get("Content-Type") != jpegContentType {
+		http.Error(w, ErrBadContentType.Error(), http.StatusBadGateway)
 		return
 	}
 
@@ -161,7 +163,7 @@ func resize(content io.ReadCloser, width, height int) ([]byte, error) {
 	buf := bytes.Buffer{}
 	err = jpeg.Encode(&buf, resizedImage, nil)
 	if err != nil {
-		return nil, err
+		return nil, ErrResizeError
 	}
 
 	return buf.Bytes(), nil

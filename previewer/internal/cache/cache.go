@@ -15,9 +15,9 @@ type Cache struct {
 	mu  sync.RWMutex
 }
 
-func New() Cache {
-	return Cache{
-		dir: "cache",
+func New(dir string) *Cache {
+	return &Cache{
+		dir: dir,
 	}
 }
 
