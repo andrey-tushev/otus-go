@@ -24,7 +24,7 @@ const (
 func TestBadTargetServer(t *testing.T) {
 	log := logger.New(logger.LevelInfo)
 
-	cache := cache.New(cacheDir)
+	cache := cache.New(cacheDir, 10)
 	cache.Clear()
 	defer cache.Clear()
 
@@ -44,7 +44,7 @@ func TestBadTargetServer(t *testing.T) {
 func TestProxyResponses(t *testing.T) {
 	log := logger.New(logger.LevelInfo)
 
-	cache := cache.New(cacheDir)
+	cache := cache.New(cacheDir, 10)
 	cache.Clear()
 	defer cache.Clear()
 
@@ -89,7 +89,7 @@ func TestProxyResponses(t *testing.T) {
 func TestProxyResize(t *testing.T) {
 	log := logger.New(logger.LevelInfo)
 
-	cache := cache.New(cacheDir)
+	cache := cache.New(cacheDir, 10)
 	cache.Clear()
 	defer cache.Clear()
 

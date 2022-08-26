@@ -11,13 +11,15 @@ import (
 )
 
 type Cache struct {
-	dir string
-	mu  sync.RWMutex
+	dir  string
+	mu   sync.RWMutex
+	size int
 }
 
-func New(dir string) *Cache {
+func New(dir string, size int) *Cache {
 	return &Cache{
-		dir: dir,
+		dir:  dir,
+		size: size,
 	}
 }
 
@@ -66,7 +68,7 @@ func (c *Cache) Set(img preview.Image, container *preview.Container) {
 	enc := gob.NewEncoder(&buff)
 	enc.Encode(container)
 
-	_, _ = f.Write(buff.Bytes())
+	_, err = f.Write(buff.Bytes())
 }
 
 func (c *Cache) filename(img preview.Image) string {

@@ -43,7 +43,7 @@ func retMain() int {
 	log.Info("Proxy started")
 	defer log.Info("Proxy finished")
 
-	cache := cache.New(cacheDir)
+	cache := cache.New(cacheDir, maxFiles)
 	cache.Clear()
 
 	proxyServer := proxy.New(log, cache, targetURL)
@@ -58,10 +58,8 @@ func retMain() int {
 		log.Info("got terminating signal")
 
 		// На остановку выделяем не более 3 секунд
-		ctx, cancel := context.WithTimeout(context.Background(), time.Second*3)
+		ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
 		defer cancel()
-
-		log.Info("terminating...")
 
 		// Останавливаем web-сервер
 		go func() {
@@ -72,7 +70,9 @@ func retMain() int {
 		}()
 	}()
 
-	if err := proxyServer.Start(ctx, "localhost", port); err != nil {
+	listenURL := fmt.Sprintf("http://%s:%d/", "localhost", port)
+	log.Info("starting web-server on " + listenURL)
+	if err := proxyServer.Start(ctx, "", port); err != nil {
 		log.Error("failed to start http-server: " + err.Error())
 		cancel()
 	}

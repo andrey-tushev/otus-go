@@ -56,12 +56,12 @@ func (s *Server) Start(ctx context.Context, host string, port int) error {
 		WriteTimeout: 1 * time.Second,
 		Handler:      s,
 	}
+
 	err := s.httpServer.ListenAndServe()
-	if err != nil {
+	if err != nil && err != http.ErrServerClosed {
 		return err
 	}
 
-	<-ctx.Done()
 	return nil
 }
 
@@ -73,6 +73,8 @@ func (s *Server) Stop(ctx context.Context) error {
 }
 
 func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+	s.logger.Info("Request URI " + r.RequestURI)
+
 	// Получаем параметры требуемой превьюшки
 	requestedPreview, err := preview.NewFromURL(r.RequestURI)
 	if err != nil {
