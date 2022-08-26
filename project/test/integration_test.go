@@ -1,0 +1,168 @@
+package test
+
+import (
+	"context"
+	"fmt"
+	"image/jpeg"
+	"net/http"
+	"testing"
+
+	"github.com/stretchr/testify/require"
+
+	"github.com/andrey-tushev/otus-go/project/internal/cache"
+	"github.com/andrey-tushev/otus-go/project/internal/logger"
+	"github.com/andrey-tushev/otus-go/project/internal/proxy"
+)
+
+const (
+	cacheDir  = "cache"
+	targetURL = "http://localhost:8082/"
+	proxyHost = "localhost"
+	proxyPort = 8081
+)
+
+func TestBadTargetServer(t *testing.T) {
+	log := logger.New(logger.LevelInfo)
+
+	cache := cache.New(cacheDir, 10)
+	cache.Clear()
+	defer cache.Clear()
+
+	ctx := context.Background()
+
+	proxyServer := proxy.New(log, cache, "http://localhost:8888/fill")
+	go proxyServer.Start(ctx, "localhost", proxyPort)
+	defer proxyServer.Stop(ctx)
+
+	proxyPref := fmt.Sprintf("http://%s:%d/fill", proxyHost, proxyPort)
+
+	resp, err := http.Get(proxyPref + "/100/100/cat-1.jpg")
+	require.NoError(t, err)
+	require.Equal(t, 502, resp.StatusCode)
+}
+
+func TestProxyResponses(t *testing.T) {
+	log := logger.New(logger.LevelInfo)
+
+	cache := cache.New(cacheDir, 10)
+	cache.Clear()
+	defer cache.Clear()
+
+	ctx := context.Background()
+
+	proxyServer := proxy.New(log, cache, targetURL)
+	go proxyServer.Start(ctx, "localhost", proxyPort)
+	defer proxyServer.Stop(ctx)
+
+	proxyPref := fmt.Sprintf("http://%s:%d/fill", proxyHost, proxyPort)
+
+	// Корректный запрос
+	{
+		resp, err := http.Get(proxyPref + "/100/100/cat-1.jpg")
+		require.NoError(t, err)
+		require.Equal(t, 200, resp.StatusCode)
+		require.Equal(t, "image/jpeg", resp.Header.Get("Content-Type"))
+	}
+
+	// Такой картинки нет
+	{
+		resp, err := http.Get(proxyPref + "/100/100/cat-x.jpg")
+		require.NoError(t, err)
+		require.Equal(t, 404, resp.StatusCode)
+	}
+
+	// Кривая картинка
+	{
+		resp, err := http.Get(proxyPref + "/100/100/bad.jpg")
+		require.NoError(t, err)
+		require.Equal(t, 502, resp.StatusCode)
+	}
+
+	// Не картинка
+	{
+		resp, err := http.Get(proxyPref + "/100/100/text.txt")
+		require.NoError(t, err)
+		require.Equal(t, 502, resp.StatusCode)
+	}
+}
+
+func TestProxyResize(t *testing.T) {
+	log := logger.New(logger.LevelInfo)
+
+	cache := cache.New(cacheDir, 10)
+	cache.Clear()
+	defer cache.Clear()
+
+	ctx := context.Background()
+
+	proxyServer := proxy.New(log, cache, targetURL)
+	go proxyServer.Start(ctx, "localhost", proxyPort)
+	defer proxyServer.Stop(ctx)
+
+	proxyPref := fmt.Sprintf("http://%s:%d/fill", proxyHost, proxyPort)
+
+	// Запросим первый раз
+	{
+		resp, err := http.Get(proxyPref + "/100/100/cat-1.jpg")
+		require.NoError(t, err)
+		require.Equal(t, "no", resp.Header.Get("X-Cached"))
+	}
+
+	// Запросим второй раз
+	{
+		resp, err := http.Get(proxyPref + "/100/100/cat-1.jpg")
+		require.NoError(t, err)
+		require.Equal(t, "yes", resp.Header.Get("X-Cached"))
+	}
+
+	// Запросим первый раз
+	{
+		resp, err := http.Get(proxyPref + "/100/100/cat-2.jpg")
+		require.NoError(t, err)
+		require.Equal(t, "no", resp.Header.Get("X-Cached"))
+	}
+
+	// Сожмем по горизонтали
+	{
+		resp, err := http.Get(proxyPref + "/100/2000/cat-1.jpg")
+		require.NoError(t, err)
+
+		preview, err := jpeg.Decode(resp.Body)
+		require.NoError(t, err)
+		require.Equal(t, 100, preview.Bounds().Dx())
+	}
+
+	// Сожмем по вертикали
+	{
+		resp, err := http.Get(proxyPref + "/2000/100/cat-1.jpg")
+		require.NoError(t, err)
+
+		preview, err := jpeg.Decode(resp.Body)
+		require.NoError(t, err)
+		require.Equal(t, 100, preview.Bounds().Dy())
+	}
+
+	// Сожмем по обоим сторонам
+	{
+		resp, err := http.Get(proxyPref + "/100/100/cat-1.jpg")
+		require.NoError(t, err)
+
+		preview, err := jpeg.Decode(resp.Body)
+		require.NoError(t, err)
+		require.LessOrEqual(t, preview.Bounds().Dy(), 100)
+		require.GreaterOrEqual(t, preview.Bounds().Dy(), 10)
+		require.LessOrEqual(t, preview.Bounds().Dy(), 100)
+		require.GreaterOrEqual(t, preview.Bounds().Dy(), 10)
+	}
+
+	// Сжатие не требуется
+	{
+		resp, err := http.Get(proxyPref + "/2000/2000/cat-1.jpg")
+		require.NoError(t, err)
+
+		preview, err := jpeg.Decode(resp.Body)
+		require.NoError(t, err)
+		require.Equal(t, 681, preview.Bounds().Dx())
+		require.Equal(t, 1024, preview.Bounds().Dy())
+	}
+}
