@@ -25,4 +25,7 @@ run-img-srv:
 kill-img-srv:
 	docker stop img-srv
 
+lint:
+	golangci-lint run ./...
+
 .PHONY: test

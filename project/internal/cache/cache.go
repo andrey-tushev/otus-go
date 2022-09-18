@@ -49,7 +49,7 @@ func (c *Cache) Get(img preview.Image) *preview.Container {
 
 	container := preview.NewContainer()
 	dataDecoder := gob.NewDecoder(f)
-	err = dataDecoder.Decode(&container)
+	_ = dataDecoder.Decode(&container)
 
 	return container
 }
@@ -68,7 +68,7 @@ func (c *Cache) Set(img preview.Image, container *preview.Container) {
 	enc := gob.NewEncoder(&buff)
 	enc.Encode(container)
 
-	_, err = f.Write(buff.Bytes())
+	_, _ = f.Write(buff.Bytes())
 }
 
 func (c *Cache) filename(img preview.Image) string {

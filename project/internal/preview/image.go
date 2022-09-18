@@ -1,8 +1,7 @@
 package preview
 
 import (
-	"crypto/md5"
-	"encoding/hex"
+	"crypto/sha256"
 	"errors"
 	"fmt"
 	"regexp"
@@ -48,7 +47,8 @@ func NewFromURL(uri string) (Image, error) {
 }
 
 func (i Image) Key() string {
-	a := md5.Sum([]byte(i.Path))
-	h := hex.EncodeToString(a[0:len(a)])
+	hash := sha256.New()
+	h := hash.Sum([]byte(i.Path))
+
 	return fmt.Sprintf("%dx%d-%s", i.Width, i.Height, h)
 }

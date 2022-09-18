@@ -14,9 +14,11 @@ import (
 	"github.com/andrey-tushev/otus-go/project/internal/proxy"
 )
 
-var targetURL string
-var port int
-var maxFiles int
+var (
+	targetURL string
+	port      int
+	maxFiles  int
+)
 
 const cacheDir = "cache"
 
@@ -32,6 +34,8 @@ func main() {
 }
 
 func retMain() int {
+	var ret int
+
 	flag.Parse()
 
 	log := logger.New(logger.LevelInfo)
@@ -74,8 +78,9 @@ func retMain() int {
 	log.Info("starting web-server on " + listenURL)
 	if err := proxyServer.Start(ctx, "", port); err != nil {
 		log.Error("failed to start http-server: " + err.Error())
+		ret = 1
 		cancel()
 	}
 
-	return 0
+	return ret
 }

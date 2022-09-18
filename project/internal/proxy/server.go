@@ -1,5 +1,6 @@
 package proxy
 
+// nolint:gci
 import (
 	"bytes"
 	"context"
@@ -36,8 +37,10 @@ type Cache interface {
 
 const jpegContentType = "image/jpeg"
 
-var ErrBadContentType = errors.New("bad content type")
-var ErrResizeError = errors.New("resize error")
+var (
+	ErrBadContentType = errors.New("bad content type")
+	ErrResizeError    = errors.New("resize error")
+)
 
 func New(logger Logger, previewCache Cache, targetPrefix string) *Server {
 	return &Server{
@@ -97,22 +100,31 @@ func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Запросим оригинальную картинку из целевого сервера
+	targetURL := s.targetPrefix + requestedPreview.Path
+	s.logger.Info("target: " + targetURL)
+
 	tr := &http.Transport{
 		MaxIdleConns:       10,
 		IdleConnTimeout:    30 * time.Second,
 		DisableCompression: true,
 	}
 	client := &http.Client{Transport: tr}
-	targetUrl := s.targetPrefix + requestedPreview.Path
-	s.logger.Info("target: " + targetUrl)
-	targetResp, err := client.Get(targetUrl)
 
-	// Убедимся что целевой сервер вернул ожидаемый ответ
+	targetReq, err := http.NewRequestWithContext(r.Context(), http.MethodGet, targetURL, nil)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusBadGateway)
 		s.logger.Error(err.Error())
 		return
 	}
+	targetResp, err := client.Do(targetReq)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusBadGateway)
+		s.logger.Error(err.Error())
+		return
+	}
+	defer targetResp.Body.Close()
+
+	// Убедимся что целевой сервер вернул ожидаемый ответ
 	if targetResp.StatusCode == 404 {
 		http.Error(w, http.StatusText(http.StatusNotFound), http.StatusNotFound)
 		return

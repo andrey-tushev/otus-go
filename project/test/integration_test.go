@@ -1,5 +1,6 @@
 package test
 
+// nolint:gci
 import (
 	"context"
 	"fmt"
@@ -36,9 +37,11 @@ func TestBadTargetServer(t *testing.T) {
 
 	proxyPref := fmt.Sprintf("http://%s:%d/fill", proxyHost, proxyPort)
 
+	// nolint:noctx
 	resp, err := http.Get(proxyPref + "/100/100/cat-1.jpg")
 	require.NoError(t, err)
 	require.Equal(t, 502, resp.StatusCode)
+	resp.Body.Close()
 }
 
 func TestProxyResponses(t *testing.T) {
@@ -58,31 +61,39 @@ func TestProxyResponses(t *testing.T) {
 
 	// Корректный запрос
 	{
+		// nolint:noctx
 		resp, err := http.Get(proxyPref + "/100/100/cat-1.jpg")
 		require.NoError(t, err)
 		require.Equal(t, 200, resp.StatusCode)
 		require.Equal(t, "image/jpeg", resp.Header.Get("Content-Type"))
+		resp.Body.Close()
 	}
 
 	// Такой картинки нет
 	{
+		// nolint:noctx
 		resp, err := http.Get(proxyPref + "/100/100/cat-x.jpg")
 		require.NoError(t, err)
 		require.Equal(t, 404, resp.StatusCode)
+		resp.Body.Close()
 	}
 
 	// Кривая картинка
 	{
+		// nolint:noctx
 		resp, err := http.Get(proxyPref + "/100/100/bad.jpg")
 		require.NoError(t, err)
 		require.Equal(t, 502, resp.StatusCode)
+		resp.Body.Close()
 	}
 
 	// Не картинка
 	{
+		// nolint:noctx
 		resp, err := http.Get(proxyPref + "/100/100/text.txt")
 		require.NoError(t, err)
 		require.Equal(t, 502, resp.StatusCode)
+		resp.Body.Close()
 	}
 }
 
@@ -103,47 +114,60 @@ func TestProxyResize(t *testing.T) {
 
 	// Запросим первый раз
 	{
+		// nolint:noctx
 		resp, err := http.Get(proxyPref + "/100/100/cat-1.jpg")
 		require.NoError(t, err)
 		require.Equal(t, "no", resp.Header.Get("X-Cached"))
+		resp.Body.Close()
 	}
 
 	// Запросим второй раз
 	{
+		// nolint:noctx
 		resp, err := http.Get(proxyPref + "/100/100/cat-1.jpg")
 		require.NoError(t, err)
 		require.Equal(t, "yes", resp.Header.Get("X-Cached"))
+		resp.Body.Close()
 	}
 
 	// Запросим первый раз
 	{
+		// nolint:noctx
 		resp, err := http.Get(proxyPref + "/100/100/cat-2.jpg")
 		require.NoError(t, err)
 		require.Equal(t, "no", resp.Header.Get("X-Cached"))
+		resp.Body.Close()
 	}
 
 	// Сожмем по горизонтали
 	{
+		// nolint: noctx
 		resp, err := http.Get(proxyPref + "/100/2000/cat-1.jpg")
 		require.NoError(t, err)
 
 		preview, err := jpeg.Decode(resp.Body)
 		require.NoError(t, err)
 		require.Equal(t, 100, preview.Bounds().Dx())
+
+		resp.Body.Close()
 	}
 
 	// Сожмем по вертикали
 	{
+		// nolint: noctx
 		resp, err := http.Get(proxyPref + "/2000/100/cat-1.jpg")
 		require.NoError(t, err)
 
 		preview, err := jpeg.Decode(resp.Body)
 		require.NoError(t, err)
 		require.Equal(t, 100, preview.Bounds().Dy())
+
+		resp.Body.Close()
 	}
 
 	// Сожмем по обоим сторонам
 	{
+		// nolint:noctx
 		resp, err := http.Get(proxyPref + "/100/100/cat-1.jpg")
 		require.NoError(t, err)
 
@@ -153,10 +177,13 @@ func TestProxyResize(t *testing.T) {
 		require.GreaterOrEqual(t, preview.Bounds().Dy(), 10)
 		require.LessOrEqual(t, preview.Bounds().Dy(), 100)
 		require.GreaterOrEqual(t, preview.Bounds().Dy(), 10)
+
+		resp.Body.Close()
 	}
 
 	// Сжатие не требуется
 	{
+		// nolint:noctx
 		resp, err := http.Get(proxyPref + "/2000/2000/cat-1.jpg")
 		require.NoError(t, err)
 
@@ -164,5 +191,7 @@ func TestProxyResize(t *testing.T) {
 		require.NoError(t, err)
 		require.Equal(t, 681, preview.Bounds().Dx())
 		require.Equal(t, 1024, preview.Bounds().Dy())
+
+		resp.Body.Close()
 	}
 }
