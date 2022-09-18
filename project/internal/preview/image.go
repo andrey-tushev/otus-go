@@ -48,7 +48,8 @@ func NewFromURL(uri string) (Image, error) {
 
 func (i Image) Key() string {
 	hash := sha256.New()
-	h := hash.Sum([]byte(i.Path))
-
-	return fmt.Sprintf("%dx%d-%s", i.Width, i.Height, h)
+	hash.Write([]byte(i.Path))
+	h := hash.Sum(nil)
+	str := fmt.Sprintf("%dx%d-%x", i.Width, i.Height, h)
+	return str
 }

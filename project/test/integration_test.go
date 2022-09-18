@@ -16,10 +16,14 @@ import (
 )
 
 const (
-	cacheDir  = "cache"
-	targetURL = "http://localhost:8082/"
 	proxyHost = "localhost"
 	proxyPort = 8081
+
+	//targetURL    = "http://localhost:8082/"
+	targetURL    = "https://raw.githubusercontent.com/andrey-tushev/otus-go/project/project/images/www/"
+	badTargetURL = "http://localhost:6666/"
+
+	cacheDir = "cache"
 )
 
 func TestBadTargetServer(t *testing.T) {
@@ -31,14 +35,14 @@ func TestBadTargetServer(t *testing.T) {
 
 	ctx := context.Background()
 
-	proxyServer := proxy.New(log, cache, "http://localhost:8888/fill")
-	go proxyServer.Start(ctx, "localhost", proxyPort)
+	proxyServer := proxy.New(log, cache, badTargetURL+"fill")
+	go proxyServer.Start(ctx, proxyHost, proxyPort)
 	defer proxyServer.Stop(ctx)
 
 	proxyPref := fmt.Sprintf("http://%s:%d/fill", proxyHost, proxyPort)
 
 	// nolint:noctx
-	resp, err := http.Get(proxyPref + "/100/100/cat-1.jpg")
+	resp, err := http.Get(proxyPref + "/100/100/cat-5.jpg")
 	require.NoError(t, err)
 	require.Equal(t, 502, resp.StatusCode)
 	resp.Body.Close()
