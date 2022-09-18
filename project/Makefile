@@ -18,6 +18,7 @@ run: build-linux build-image
 test:
 	go clean -cache
 	go test -v ./...
+	go test -race -count 10 ./internal/cache
 
 run-img-srv:
 	docker run --name img-srv --rm -v $(shell pwd)/images/www:/usr/share/nginx/html -p 8082:80 -d nginx:alpine
